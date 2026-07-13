@@ -107,6 +107,3 @@ Ce projet a été réalisé dans le cadre d'un **stage de fin d'études** au sei
 | **Postman** | Tests des endpoints API |
 | **pgAdmin** | Administration de la base de données |
 
----
-
-## 📁 Architecture du projet
