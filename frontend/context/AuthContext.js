@@ -55,6 +55,20 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    try {
+      const res = await api.post('/auth/google', { credential });
+      localStorage.setItem('token', res.data.token);
+      setUser(res.data.user);
+      toast.success('Connexion réussie !');
+      router.push('/dashboard');
+      return { success: true };
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Erreur de connexion Google');
+      return { success: false, error: error.response?.data?.message };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem('token');
     setUser(null);
@@ -63,7 +77,7 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, register, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, register, login, loginWithGoogle, logout }}>
       {children}
     </AuthContext.Provider>
   );

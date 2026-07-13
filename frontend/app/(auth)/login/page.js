@@ -1,16 +1,17 @@
-// app/(auth)/login/page.js
 'use client';
 import { useState } from 'react';
 import { useAuth } from '../../../context/AuthContext';
 import Link from 'next/link';
-import { Mail, Lock, Loader2, Brain, GraduationCap, Clock, CheckCircle } from 'lucide-react';
+import Image from 'next/image';
+import { Mail, Lock, Loader2, Brain, CheckCircle, Clock } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,17 +24,20 @@ export default function LoginPage() {
     setLoading(false);
   };
 
-  // Icônes réutilisables
-  const InputIcon = ({ Icon, ...props }) => (
-    <Icon className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
-  );
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    const result = await loginWithGoogle(credentialResponse.credential);
+    if (!result?.success) {
+      setError(result?.error || 'Connexion Google échouée.');
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
-        
-        {/* Partie gauche – Formulaire */}
-        <div className="w-full md:w-1/2 px-8 py-12 md:px-12 lg:px-16">
+
+        {/* PARTIE GAUCHE – FORMULAIRE */}
+        <div className="w-full md:w-7/12 px-8 py-12 md:px-12 lg:px-16">
           <div className="flex items-center gap-2 mb-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
               <Brain className="w-5 h-5 text-white" strokeWidth={2} />
@@ -60,7 +64,7 @@ export default function LoginPage() {
                   placeholder="vous@exemple.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition duration-200"
+                  className="w-full pl-10 pr-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition duration-200"
                   required
                 />
               </div>
@@ -75,7 +79,7 @@ export default function LoginPage() {
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition duration-200"
+                  className="w-full pl-10 pr-4 py-3 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition duration-200"
                   required
                 />
               </div>
@@ -86,8 +90,9 @@ export default function LoginPage() {
                 <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
                 Se souvenir de moi
               </label>
-              <Link href="#" className="text-blue-600 hover:underline">Mot de passe oublié ?</Link>
-            </div>
+                <Link href="/forgot-password" className="text-blue-600 hover:underline">
+                  Mot de passe oublié ?
+                </Link>            </div>
 
             <button
               type="submit"
@@ -98,6 +103,24 @@ export default function LoginPage() {
               {loading ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
+
+          <div className="flex items-center gap-3 my-6">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">ou</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          <div className="flex justify-center">
+            <GoogleLogin
+              onSuccess={handleGoogleSuccess}
+              onError={() => setError('Connexion Google échouée.')}
+              theme="outline"
+              size="large"
+              width="100%"
+              text="continue_with"
+              locale="fr"
+            />
+          </div>
 
           <p className="text-center mt-6 text-sm text-gray-500">
             Vous n'avez pas encore de compte ?{' '}
@@ -118,58 +141,19 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Partie droite – Illustration & Stats */}
-        <div className="w-full md:w-1/2 bg-gradient-to-br from-blue-600 to-indigo-700 p-8 flex flex-col justify-between text-white">
-          <div>
-            <div className="flex items-center gap-2 mb-6">
-              <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
-                <Brain className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-xl font-bold">AI Study Assistant</span>
-            </div>
-            <h2 className="text-2xl font-bold mb-2">Votre compagnon intelligent</h2>
-            <p className="text-blue-100 text-sm mb-8">Apprenez plus efficacement avec l'intelligence artificielle</p>
-            
-            <div className="space-y-4">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex items-center gap-4">
-                <div className="bg-white/20 rounded-xl p-3">
-                  <GraduationCap className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">150+</p>
-                  <p className="text-sm text-blue-100">cours analysés</p>
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex items-center gap-4">
-                <div className="bg-white/20 rounded-xl p-3">
-                  <Clock className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">24/7</p>
-                  <p className="text-sm text-blue-100">IA disponible</p>
-                </div>
-              </div>
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 flex items-center gap-4">
-                <div className="bg-white/20 rounded-xl p-3">
-                  <CheckCircle className="w-6 h-6" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold">95%</p>
-                  <p className="text-sm text-blue-100">de satisfaction</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 text-center text-sm text-blue-200 border-t border-white/10 pt-4">
-            <div className="font-mono text-xs">
-              <span className="font-mono text-xs">
-                f = √( (2πσ²) / ae )
-              </span>
-            </div>
-            <p className="text-xs mt-1">Points clés</p>
+        {/* PARTIE DROITE – IMAGE PLEINE */}
+        <div className="w-full md:w-5/12 relative">
+          <div className="relative w-full h-full min-h-[300px] md:min-h-[550px]">
+            <Image
+              src="/image/Login.png"
+              alt="Illustration de connexion"
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
         </div>
+
       </div>
     </div>
   );
