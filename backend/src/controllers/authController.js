@@ -133,6 +133,13 @@ exports.googleAuth = async (req, res) => {
 // 4. DEMANDE DE CODE (Étape 1) AVEC LOG
 // =============================================
 exports.requestResetCode = async (req, res) => {
+  console.log('📧 Avant envoi email');
+try {
+  await sendResetCodeEmail(user.email, code);
+  console.log('✅ Email envoyé avec succès');
+} catch (emailError) {
+  console.error('❌ ECHEC envoi email :', emailError.message);
+}
   console.log('✅ Route /request-reset-code atteinte !');
   try {
     const { email } = req.body;
