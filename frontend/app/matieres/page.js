@@ -127,11 +127,11 @@ function ResultCard({ icon: Icon, title, description }) {
 function QuizQuestion({ question, index, total, selectedAnswer, onSelect, showResult, isCorrect }) {
   const optionLabels = ['A', 'B', 'C', 'D'];
 
-  const getOptionClass = (option) => {
+  const getOptionClass = (index) => {
     if (!showResult) return 'hover:bg-gray-50';
-    const letter = option.charAt(0);
+    const letter = optionLabels[index];
     const isSelected = selectedAnswer === letter;
-    const isCorrectAnswer = question.bonneReponse?.charAt(0) === letter;
+    const isCorrectAnswer = question.bonne_reponse?.charAt(0) === letter;
 
     if (isSelected && isCorrectAnswer) return 'bg-green-100 border-green-400';
     if (isSelected && !isCorrectAnswer) return 'bg-red-100 border-red-400';
@@ -158,12 +158,12 @@ function QuizQuestion({ question, index, total, selectedAnswer, onSelect, showRe
         {question.options?.map((opt, i) => {
           const letter = optionLabels[i];
           const isSelected = selectedAnswer === letter;
-          const isCorrectAnswer = question.bonneReponse?.charAt(0) === letter;
+          const isCorrectAnswer = question.bonne_reponse?.charAt(0) === letter;
 
           return (
             <label
               key={i}
-              className={`flex items-center gap-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer ${getOptionClass(opt)}`}
+              className={`flex items-center gap-3 p-2 rounded-lg border transition-all duration-200 cursor-pointer ${getOptionClass(i)}`}
             >
               <input
                 type="radio"
@@ -356,7 +356,7 @@ export default function MatieresPage() {
 
     quizData.questions.forEach((q) => {
       const userAnswer = userAnswers[q.id];
-      const correctAnswer = q.bonneReponse;
+      const correctAnswer = q.bonne_reponse;
 
       // Extraire la première lettre (A-D) avec une regex
       const userMatch = String(userAnswer || '').match(/[A-D]/i);
@@ -677,7 +677,7 @@ export default function MatieresPage() {
                       selectedAnswer={userAnswers[q.id]}
                       onSelect={handleSelectAnswer}
                       showResult={showResults}
-                      isCorrect={userAnswers[q.id]?.charAt(0) === q.bonneReponse?.charAt(0)}
+                      isCorrect={userAnswers[q.id]?.charAt(0) === q.bonne_reponse?.charAt(0)}
                     />
                   ))}
                 </div>
