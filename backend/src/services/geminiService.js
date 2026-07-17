@@ -154,6 +154,91 @@ async function generateQuizFromText(text, numQuestions = 5, difficulty = 'Moyen'
     throw new Error('Impossible de générer le quiz');
   }
 }
+async function generateExercisesFromText(text, numExercises = 3, difficulty = 'Moyen') {
+  const prompt = `
+    Tu es un professeur. Génère ${numExercises} exercices pédagogiques basés sur le texte suivant.
+    Le niveau de difficulté est : ${difficulty}.
+
+    Pour chaque exercice, propose une question et sa réponse correcte.
+    Si l'exercice est un QCM, fournis 4 options (A, B, C, D).
+    Sinon, fournis une question ouverte avec sa réponse.
+
+    Retourne les exercices au format JSON suivant :
+    [
+      {
+        "question": "Texte de l'exercice",
+        "type": "qcm" ou "ouverte",
+        "options": ["A) ...", "B) ...", "C) ...", "D) ..."] (uniquement pour QCM),
+        "correctAnswer": "Réponse correcte"
+      }
+    ]
+
+    Texte :
+    ${text}
+
+    Réponse (uniquement le JSON) :
+  `;
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      return JSON.parse(jsonMatch[0]);
+    }
+    return JSON.parse(raw);
+  } catch (error) {
+    console.error('Erreur parsing JSON des exercices:', error);
+    throw new Error('Impossible de générer les exercices');
+  }
+}
+async function checkExerciseAnswers(exercises, userAnswers) {
+  const prompt = `
+    Tu es un professeur qui corrige des exercices.
+    Pour chaque exercice, vérifie si la réponse de l'étudiant est correcte.
+    Pour les QCM, la réponse doit correspondre exactement à la lettre de la bonne réponse.
+    Pour les questions ouvertes, utilise ton jugement pour déterminer si la réponse est correcte ou non.
+
+    Réponds UNIQUEMENT par un tableau JSON valide, rien d'autre :
+    [
+      {
+        "isCorrect": true ou false,
+        "feedback": "Explication courte (en français)"
+      }
+    ]
+
+    Exercices et réponses à corriger :
+    ${JSON.stringify(exercises.map((ex, i) => ({
+      question: ex.question,
+      type: ex.type,
+      correctAnswer: ex.correctAnswer,
+      userAnswer: userAnswers[i]
+    })), null, 2)}
+  `;
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    const parsed = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
+    return parsed;
+  } catch (error) {
+    console.error('Erreur parsing JSON correction:', error);
+    // Fallback : simple comparaison pour les QCM
+    return exercises.map((ex, i) => {
+      if (ex.type === 'qcm' && ex.options) {
+        const correctLetter = ex.correctAnswer?.charAt(0)?.toUpperCase();
+        const userLetter = String(userAnswers[i] || '').charAt(0).toUpperCase();
+        return {
+          isCorrect: correctLetter === userLetter,
+          feedback: correctLetter === userLetter ? 'Bonne réponse !' : `La bonne réponse était ${correctLetter}`
+        };
+      }
+      return {
+        isCorrect: false,
+        feedback: `La bonne réponse est : ${ex.correctAnswer}`
+      };
+    });
+  }
+}
 module.exports = {
   testGemini,
   generateSummary,
@@ -162,4 +247,6 @@ module.exports = {
   analyzeImage,
   chatWithContext,
   generateQuizFromText,
+  generateExercisesFromText,
+  checkExerciseAnswers,
 };

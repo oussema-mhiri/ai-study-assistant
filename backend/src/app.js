@@ -61,6 +61,8 @@ app.post('/api/test-summary', async (req, res) => {
 // Routes IA
 const aiRoutes = require('./routes/aiRoutes');
 app.use('/api/ai', aiRoutes);
+const exerciseRoutes = require('./routes/exerciseRoutes');
+app.use('/api/exercises', exerciseRoutes);
 // Démarrer le serveur
 app.listen(port, () => {
   console.log(`Serveur démarré sur http://localhost:${port}`);
