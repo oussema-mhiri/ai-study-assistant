@@ -27,11 +27,10 @@ Année universitaire : 2025 / 2026
 
 ## 🛠️ Stack
 
-Frontend : Next.js 14, Tailwind CSS, Axios
+Frontend : React 18, Next.js 14, Tailwind CSS, Axios
 Backend : Node.js, Express, JWT, Bcrypt, Nodemailer, Multer
 Base de données : PostgreSQL, pgAdmin
 IA : Gemini API
-
 ---
 
 ## 📁 Structure rapide
