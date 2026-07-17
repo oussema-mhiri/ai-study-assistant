@@ -31,6 +31,7 @@ Frontend : React 18, Next.js 14, Tailwind CSS, Axios
 Backend : Node.js, Express, JWT, Bcrypt, Nodemailer, Multer
 Base de données : PostgreSQL, pgAdmin
 IA : Gemini API
+
 ---
 
 ## 📁 Structure rapide
