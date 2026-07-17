@@ -1,109 +1,91 @@
 # 🎓 AI Study Assistant
 
-## Assistant Intelligent pour l'Apprentissage Universitaire
+Assistant intelligent pour l'apprentissage universitaire — stage d'été 2ème année chez Mobelite (2026).
 
 ---
 
-## 📌 Présentation du projet
+## ✨ Fonctionnalités principales
 
-**AI Study Assistant** est une application web SaaS conçue pour accompagner les étudiants universitaires dans leur parcours académique. Elle intègre des fonctionnalités avancées d'intelligence artificielle pour analyser les cours, générer des résumés, des quiz et des fiches de révision, tout en offrant un chatbot pédagogique et un planning intelligent.
-
-Ce projet a été réalisé dans le cadre d'un **stage de fin d'études** au sein de l'entreprise **Mobelite**, sous la supervision de **Mme Rania Wannes**.
-
-**Année universitaire** : 2025 / 2026
-
----
-
-## 🎯 Objectifs du projet
-
-- **Faciliter la compréhension** des cours grâce à l'IA
-- **Générer automatiquement** des résumés, fiches de révision et quiz
-- **Offrir un chatbot pédagogique** pour répondre aux questions des étudiants
-- **Organiser les révisions** avec un planning intelligent personnalisé
-- **Suivre la progression** de l'étudiant dans chaque matière
-- **Envoyer des rappels** avant les examens
-- **Recommander** des ressources pédagogiques adaptées
+- **Auth** : JWT, Google OAuth, réinitialisation OTP (6 chiffres)
+- **Matières** : CRUD, organisation des cours
+- **Documents** : upload PDF/DOCX/PPTX/images, extraction texte
+- **IA (Gemini)** : résumés, points clés, définitions
+- **Quiz** : QCM générés + correction interactive (vert/rouge)
+- **Exercices** : QCM/ouvert, correction IA, feedback personnalisé
+- **Chatbot** : assistant contextuel basé sur les documents
+- **Planning** : calendrier hebdomadaire, suivi de progression
+- **Notifications** : push + email, rappels examens
+- **Paramètres** : profil, préférences IA, thème clair/sombre
 
 ---
 
-## 🚀 Fonctionnalités principales
+## 🛠️ Stack
 
-### 🔐 Authentification et gestion des comptes
-- Inscription et connexion sécurisées (JWT)
-- Connexion via Google OAuth 2.0
-- Réinitialisation du mot de passe par code OTP à 6 chiffres (sécurisé, valable 5 minutes)
-- Protection des routes côté backend et frontend
-
-### 📚 Gestion des matières
-- Création et sélection de matières
-- Organisation des cours par matière
-- Liaison entre documents et matières
-
-### 📄 Importation et analyse de documents
-- Upload de fichiers (PDF, DOCX, PPTX, images)
-- Extraction automatique du texte
-- Génération de résumés (court et détaillé)
-- Détection des concepts clés et définitions importantes
-
-### 🤖 Chatbot pédagogique
-- Assistance IA basée sur les documents importés
-- Explications, résumés, exemples et reformulations
-- Réponses contextuelles et personnalisées
-
-### ❓ Quiz intelligents
-- Génération automatique de QCM, Vrai/Faux, questions ouvertes
-- Adaptation du niveau de difficulté selon les performances
-- Correction et analyse des résultats
-
-### 📅 Planning de révision
-- Planification automatique basée sur les examens
-- Sessions de révision optimisées (durée, type d'activité)
-- Calendrier hebdomadaire interactif
-
-### 📊 Suivi de progression
-- Graphiques de progression par matière
-- Statistiques détaillées (quiz réussis, temps passé, etc.)
-- Recommandations IA personnalisées
-
-### 🔔 Notifications et rappels
-- Notifications push dans l'application
-- Rappels par email avant les examens
-- Alertes de retard et suggestions de révision
-
-### ⚙️ Paramètres utilisateur
-- Gestion du profil (université, faculté, filière, etc.)
-- Préférences IA (niveau d'explication, mode de réponse)
-- Thème clair/sombre et langue de l'application
+| Frontend | Backend | Base de données | IA |
+|----------|---------|-----------------|-----|
+| Next.js 14 | Node.js / Express | PostgreSQL | Gemini API |
+| Tailwind CSS | JWT / Bcrypt | pgAdmin | - |
+| Axios | Nodemailer / Multer | - | - |
 
 ---
 
-## 🛠️ Technologies utilisées
+## 📁 Structure rapide
+backend/ → API REST (Node/Express)
+frontend/ → App Next.js (App Router)
+uploads/ → Fichiers importés
 
-### Frontend
-| Technologie | Utilisation |
-|-------------|-------------|
-| **Next.js 14** | Framework React avec App Router |
-| **Tailwind CSS** | Design system moderne et responsive |
-| **Lucide React** | Icônes personnalisées |
-| **Axios** | Client HTTP pour les appels API |
-| **React Hook Form** | Gestion et validation des formulaires |
-| **React Hot Toast** | Notifications utilisateur |
 
-### Backend
-| Technologie | Utilisation |
-|-------------|-------------|
-| **Node.js** | Environnement d'exécution |
-| **Express.js** | Framework API REST |
-| **PostgreSQL** | Base de données relationnelle |
-| **JWT** | Authentification sécurisée |
-| **Bcryptjs** | Hachage des mots de passe |
-| **Nodemailer** | Envoi d'emails (Gmail / Ethereal) |
-| **Multer** | Upload de fichiers |
+---
 
-### Outils de développement
-| Technologie | Utilisation |
-|-------------|-------------|
-| **Git & GitHub** | Versionnement et collaboration |
-| **Postman** | Tests des endpoints API |
-| **pgAdmin** | Administration de la base de données |
+## ⚙️ Installation
 
+```bash
+git clone https://github.com/oussema-mhiri/ai-study-assistant.git
+cd ai-study-assistant
+
+# Backend
+cd backend && npm install
+# .env : PORT, DATABASE_URL, JWT_SECRET, GEMINI_API_KEY, EMAIL_*
+
+# Frontend
+cd ../frontend && npm install
+
+# Lancer
+npm run dev  # backend:5000 / frontend:3000
+🧪 API principales
+Endpoint	Description
+POST /api/auth/register	Inscription
+POST /api/auth/login	Connexion
+POST /api/auth/request-reset-code	Demande OTP
+GET /api/subjects	Liste matières
+POST /api/documents	Upload fichier
+POST /api/ai/analyze	Analyse IA (résumé, points clés)
+POST /api/quizzes/generate	Génération quiz
+POST /api/exercises/generate	Génération exercices
+POST /api/exercises/check	Correction exercice
+POST /api/chatbot/message	Message chatbot
+👨‍💻 Auteur
+Oussema Mhiri — stage d'été 2ème année, encadré par Mme Rania Wannes
+
+📧 oussemamhiri963@gmail.com
+🔗 GitHub
+
+🚀 Projet complet, fonctionnel et prêt pour la démonstration.
+
+
+## ✅ Ce qui a été supprimé
+
+| Section | Action |
+|---------|--------|
+| Objectifs détaillés | ✅ Résumés en une ligne |
+| Tableau des technologies | ✅ Fusionné en une liste compacte |
+| Architecture détaillée | ✅ Remplacée par une structure rapide |
+| Diagramme de classes | ✅ Supprimé |
+| Design System | ✅ Supprimé |
+| Workflow Git | ✅ Supprimé |
+| Calendrier de développement | ✅ Supprimé |
+| Licence | ✅ Supprimée |
+
+---
+
+**Ce README tient sur une page et contient l'essentiel pour comprendre le projet, l'installer et l'utiliser.** 🚀
