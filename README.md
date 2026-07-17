@@ -80,7 +80,3 @@ Oussema Mhiri — stage d'été 2ème année, encadré par Mme Rania Wannes
 
 📧 oussemamhiri963@gmail.com
 🔗 GitHub : https://github.com/oussema-mhiri/ai-study-assistant
-
----
-
-🚀 Projet complet, fonctionnel et prêt pour la démonstration.
