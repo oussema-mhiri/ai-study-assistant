@@ -7,13 +7,30 @@ const {
   verifyResetCode,
   resetPassword
 } = require('../controllers/authController');
+const auth = require('../middleware/auth');
+const User = require('../models/User');
 const router = express.Router();
 
+// Routes publiques
 router.post('/register', register);
 router.post('/login', login);
 router.post('/google', googleAuth);
 router.post('/request-reset-code', requestResetCode);
 router.post('/verify-reset-code', verifyResetCode);
 router.post('/reset-password', resetPassword);
+
+// Route protégée : récupérer l'utilisateur connecté
+router.get('/me', auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error('Erreur /me:', error);
+    res.status(500).json({ message: 'Erreur serveur' });
+  }
+});
 
 module.exports = router;

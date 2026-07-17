@@ -12,14 +12,21 @@
   "license": "ISC",
   "type": "commonjs",
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "adm-zip": "^0.6.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
+    "docutext": "^1.2.1",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "google-auth-library": "^10.9.0",
     "jsonwebtoken": "^9.0.3",
+    "mammoth": "^1.12.0",
+    "multer": "^2.2.0",
     "nodemailer": "^9.0.3",
-    "pg": "^8.22.0"
+    "pdf-parse": "^1.1.1",
+    "pg": "^8.22.0",
+    "xml2js": "^0.6.2"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

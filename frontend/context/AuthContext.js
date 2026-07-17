@@ -1,9 +1,8 @@
-// frontend/context/AuthContext.js
 'use client';
 import { createContext, useContext, useState, useEffect } from 'react';
-import api from '../lib/api';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
+import api from '../lib/api';
 
 const AuthContext = createContext();
 
@@ -12,12 +11,19 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  console.log('🔵 AuthProvider rendu');
+
   useEffect(() => {
+    console.log('🔄 useEffect Auth');
     const token = localStorage.getItem('token');
     if (token) {
       api.get('/auth/me')
-        .then((res) => setUser(res.data))
-        .catch(() => {
+        .then((res) => {
+          console.log('✅ Utilisateur chargé:', res.data);
+          setUser(res.data);
+        })
+        .catch((err) => {
+          console.error('❌ Erreur /auth/me:', err);
           localStorage.removeItem('token');
           setUser(null);
         })
