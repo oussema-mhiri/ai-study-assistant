@@ -121,15 +121,15 @@ function ResultCard({ icon: Icon, title, description }) {
 }
 
 // ============================================
-// COMPOSANT QUIZ – AVEC AFFICHAGE DES RÉSULTATS (VRAI/FAUX)
+// COMPOSANT QUIZ
 // ============================================
 
 function QuizQuestion({ question, index, total, selectedAnswer, onSelect, showResult, isCorrect }) {
   const optionLabels = ['A', 'B', 'C', 'D'];
 
-  const getOptionClass = (index) => {
+  const getOptionClass = (idx) => {
     if (!showResult) return 'hover:bg-gray-50';
-    const letter = optionLabels[index];
+    const letter = optionLabels[idx];
     const isSelected = selectedAnswer === letter;
     const isCorrectAnswer = question.bonne_reponse?.charAt(0) === letter;
 
@@ -227,6 +227,9 @@ export default function MatieresPage() {
   const [generatingExercise, setGeneratingExercise] = useState(false);
   const [exerciseData, setExerciseData] = useState(null);
   const [showExercise, setShowExercise] = useState(false);
+  const [exerciseAnswers, setExerciseAnswers] = useState({});
+  const [exerciseResults, setExerciseResults] = useState({});
+  const [showCorrection, setShowCorrection] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -310,6 +313,9 @@ export default function MatieresPage() {
     setUserAnswers({});
     setExerciseData(null);
     setShowExercise(false);
+    setExerciseAnswers({});
+    setExerciseResults({});
+    setShowCorrection(false);
   };
 
   // Quiz
@@ -346,9 +352,6 @@ export default function MatieresPage() {
     }));
   };
 
-  // ================================
-  // CORRECTION PRINCIPALE : COMPARAISON ROBUSTE
-  // ================================
   const handleShowResults = () => {
     if (!quizData?.questions) return;
     let correct = 0;
@@ -358,15 +361,11 @@ export default function MatieresPage() {
       const userAnswer = userAnswers[q.id];
       const correctAnswer = q.bonne_reponse;
 
-      // Extraire la première lettre (A-D) avec une regex
       const userMatch = String(userAnswer || '').match(/[A-D]/i);
       const correctMatch = String(correctAnswer || '').match(/[A-D]/i);
 
       const normalizedUser = userMatch ? userMatch[0].toUpperCase() : '';
       const normalizedCorrect = correctMatch ? correctMatch[0].toUpperCase() : '';
-
-      // DEBUG : afficher les valeurs normalisées
-      console.log(`🔍 Question ${q.id}: user="${userAnswer}" -> ${normalizedUser}, correct="${correctAnswer}" -> ${normalizedCorrect}`);
 
       if (normalizedUser && normalizedCorrect && normalizedUser === normalizedCorrect) {
         correct++;
@@ -389,6 +388,9 @@ export default function MatieresPage() {
     }
     setGeneratingExercise(true);
     setShowExercise(false);
+    setExerciseAnswers({});
+    setExerciseResults({});
+    setShowCorrection(false);
     try {
       const res = await api.post('/exercises/generate', {
         documentId: parseInt(selectedExerciseDoc),
@@ -405,6 +407,60 @@ export default function MatieresPage() {
     }
   };
 
+  const handleCheckExercises = async () => {
+    // Vérifier que toutes les réponses sont fournies
+    const allAnswered = exerciseData.exercises.every((_, idx) => {
+      const ans = exerciseAnswers[idx];
+      return ans && ans.trim() !== '';
+    });
+    if (!allAnswered) {
+      alert('Veuillez répondre à tous les exercices avant de voir les corrections.');
+      return;
+    }
+
+    // Vérifier que chaque exercice a une question et une réponse correcte valides
+    const allValid = exerciseData.exercises.every((ex) => {
+      const q = ex.question && ex.question.trim() !== '';
+      const c = ex.correctAnswer && ex.correctAnswer.trim() !== '';
+      return q && c;
+    });
+    if (!allValid) {
+      alert('Certains exercices générés sont incomplets. Veuillez les régénérer.');
+      return;
+    }
+
+    setShowCorrection(true);
+    const payload = {
+      exercises: exerciseData.exercises.map(ex => ({
+        question: ex.question.trim(),
+        type: ex.type || 'ouverte',
+        correctAnswer: ex.correctAnswer.trim(),
+      })),
+      userAnswers: exerciseData.exercises.map((_, idx) => (exerciseAnswers[idx] || '').trim()),
+    };
+    try {
+      const res = await api.post('/exercises/check', payload);
+      const resultsArray = res.data.results;
+      const results = {};
+      resultsArray.forEach((r, idx) => { results[idx] = r; });
+      setExerciseResults(results);
+    } catch (err) {
+      console.error('Erreur vérification exercices', err);
+      if (err.response && err.response.status === 400) {
+        alert('Erreur 400 : vérifiez que tous les exercices ont une question et une réponse correcte valides.');
+      }
+      const fallbackResults = {};
+      exerciseData.exercises.forEach((ex, idx) => {
+        fallbackResults[idx] = {
+          isCorrect: false,
+          feedback: 'Erreur de vérification. Veuillez réessayer.',
+          correctAnswer: ex.correctAnswer,
+        };
+      });
+      setExerciseResults(fallbackResults);
+    }
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -415,7 +471,11 @@ export default function MatieresPage() {
 
   if (!user) return null;
 
-  const allAnswered = quizData?.questions?.every((q) => userAnswers[q.id] !== undefined);
+  const allAnsweredQuiz = quizData?.questions?.every((q) => userAnswers[q.id] !== undefined);
+  const allAnsweredExercises = exerciseData?.exercises?.every((_, idx) => {
+    const ans = exerciseAnswers[idx];
+    return ans && ans.trim() !== '';
+  });
 
   return (
     <div className="min-h-screen bg-white flex">
@@ -687,13 +747,13 @@ export default function MatieresPage() {
                     <>
                       <button
                         onClick={handleShowResults}
-                        disabled={!allAnswered}
+                        disabled={!allAnsweredQuiz}
                         className="px-6 py-2.5 bg-emerald-600 text-white rounded-xl text-sm font-medium hover:bg-emerald-700 transition-all shadow-md shadow-emerald-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
                         <CheckCircle className="w-4 h-4" />
                         Voir les résultats
                       </button>
-                      {!allAnswered && (
+                      {!allAnsweredQuiz && (
                         <span className="text-sm text-amber-600 flex items-center gap-1">
                           <AlertCircle className="w-4 h-4" />
                           Répondez à toutes les questions
@@ -734,12 +794,15 @@ export default function MatieresPage() {
             )}
           </div>
 
-          {/* EXERCICES */}
+          {/* ========================================== */}
+          {/* EXERCICES (version interactive corrigée) */}
+          {/* ========================================== */}
           <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
             <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
               <PenTool className="w-5 h-5 text-blue-500" />
               Générer des exercices
             </h2>
+
             <div className="flex flex-wrap items-center gap-4">
               <select
                 value={selectedExerciseDoc}
@@ -758,9 +821,7 @@ export default function MatieresPage() {
                     key={n}
                     onClick={() => setExerciseCount(n)}
                     className={`px-3 py-1.5 border rounded-full text-sm transition-all ${
-                      exerciseCount === n
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'hover:bg-blue-50 text-gray-700'
+                      exerciseCount === n ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-blue-50 text-gray-700'
                     }`}
                   >
                     {n}
@@ -774,9 +835,7 @@ export default function MatieresPage() {
                     key={n}
                     onClick={() => setExerciseDifficulty(n)}
                     className={`px-3 py-1.5 border rounded-full text-sm transition-all ${
-                      exerciseDifficulty === n
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'hover:bg-blue-50 text-gray-700'
+                      exerciseDifficulty === n ? 'bg-blue-600 text-white border-blue-600' : 'hover:bg-blue-50 text-gray-700'
                     }`}
                   >
                     {n}
@@ -799,21 +858,101 @@ export default function MatieresPage() {
                   <PenTool className="w-4 h-4 text-emerald-500" />
                   Exercices générés
                 </h3>
-                <div className="space-y-3">
-                  {exerciseData.exercises?.map((ex, i) => (
-                    <div key={i} className="bg-white p-4 rounded-xl border border-gray-100">
-                      <p className="font-medium text-gray-800">Exercice {i + 1}</p>
+                <div className="space-y-4">
+                  {exerciseData.exercises?.map((ex, idx) => (
+                    <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100">
+                      <p className="font-medium text-gray-800">Exercice {idx + 1}</p>
                       <p className="text-sm text-gray-600 mt-1">{ex.question}</p>
-                      {ex.options && (
-                        <div className="mt-2 space-y-1">
-                          {ex.options.map((opt, j) => (
-                            <div key={j} className="text-sm text-gray-500">• {opt}</div>
-                          ))}
+
+                      {/* Zone de réponse */}
+                      <div className="mt-2">
+                        {ex.options ? (
+                          <div className="space-y-1">
+                            {ex.options.map((opt, j) => (
+                              <label key={j} className="flex items-center gap-2 text-sm text-gray-700">
+                                <input
+                                  type="radio"
+                                  name={`exercise-${idx}`}
+                                  value={opt}
+                                  onChange={(e) => {
+                                    const newAnswers = { ...exerciseAnswers, [idx]: e.target.value };
+                                    setExerciseAnswers(newAnswers);
+                                  }}
+                                  disabled={showCorrection}
+                                />
+                                {opt}
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <input
+                            type="text"
+                            placeholder="Votre réponse..."
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+                            value={exerciseAnswers[idx] || ''}
+                            onChange={(e) => {
+                              const newAnswers = { ...exerciseAnswers, [idx]: e.target.value };
+                              setExerciseAnswers(newAnswers);
+                            }}
+                            disabled={showCorrection}
+                          />
+                        )}
+                      </div>
+
+                      {/* Correction */}
+                      {showCorrection && exerciseResults[idx] && (
+                        <div className={`mt-2 p-2 rounded-lg ${exerciseResults[idx].isCorrect ? 'bg-green-100 border border-green-300' : 'bg-red-100 border border-red-300'}`}>
+                          <p className="text-sm font-medium">
+                            {exerciseResults[idx].isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                          </p>
+                          <p className="text-sm text-gray-700">Réponse correcte : {ex.correctAnswer}</p>
+                          {exerciseResults[idx].feedback && (
+                            <p className="text-sm text-gray-600 mt-1">{exerciseResults[idx].feedback}</p>
+                          )}
                         </div>
                       )}
-                      <p className="text-sm text-emerald-600 mt-2 font-medium">✓ Réponse : {ex.correctAnswer}</p>
                     </div>
                   ))}
+                </div>
+
+                {/* Boutons d'action */}
+                <div className="mt-4 flex gap-3">
+                  {!showCorrection ? (
+                    <button
+                      onClick={handleCheckExercises}
+                      disabled={!allAnsweredExercises}
+                      className="px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-all shadow-md shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      Voir les corrections
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowCorrection(false);
+                          setExerciseResults({});
+                          setExerciseAnswers({});
+                          setShowExercise(false);
+                          setExerciseData(null);
+                        }}
+                        className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300"
+                      >
+                        Recommencer
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowCorrection(false);
+                          setExerciseResults({});
+                          setExerciseAnswers({});
+                          setShowExercise(false);
+                          setExerciseData(null);
+                        }}
+                        className="px-6 py-2.5 bg-gray-200 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-300"
+                      >
+                        Fermer
+                      </button>
+                    </>
+                  )}
                 </div>
               </div>
             )}

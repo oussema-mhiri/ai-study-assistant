@@ -239,6 +239,34 @@ async function checkExerciseAnswers(exercises, userAnswers) {
     });
   }
 }
+async function checkExerciseAnswer(question, userAnswer, correctAnswer) {
+  const prompt = `
+    Tu es un professeur. Voici un exercice, la réponse correcte, et la réponse proposée par l'étudiant.
+    Détermine si la réponse de l'étudiant est correcte (ou suffisamment proche) et renvoie un objet JSON avec les champs :
+    - isCorrect: boolean (true si la réponse est correcte, false sinon)
+    - feedback: string (un retour court pour l'étudiant, expliquant pourquoi c'est juste ou faux)
+    - correctAnswer: string (réponse correcte, au cas où l'étudiant voudrait la voir)
+
+    Exercice: ${question}
+    Réponse correcte: ${correctAnswer}
+    Réponse de l'étudiant: ${userAnswer}
+
+    Réponse (uniquement le JSON) :
+  `;
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  try {
+    const json = JSON.parse(raw);
+    return json;
+  } catch (error) {
+    console.error('Erreur parsing JSON de vérification:', error);
+    return {
+      isCorrect: false,
+      feedback: "Erreur lors de la vérification, veuillez réessayer.",
+      correctAnswer: correctAnswer
+    };
+  }
+}
 module.exports = {
   testGemini,
   generateSummary,

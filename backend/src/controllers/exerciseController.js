@@ -48,3 +48,18 @@ exports.checkExercises = async (req, res) => {
     res.status(500).json({ message: error.message || 'Erreur lors de la correction des exercices' });
   }
 };
+const { checkExerciseAnswer } = require('../services/geminiService');
+
+exports.checkExercise = async (req, res) => {
+  try {
+    const { question, userAnswer, correctAnswer } = req.body;
+    if (!question || !userAnswer || !correctAnswer) {
+      return res.status(400).json({ message: 'question, userAnswer et correctAnswer requis' });
+    }
+    const result = await checkExerciseAnswer(question, userAnswer, correctAnswer);
+    res.json(result);
+  } catch (error) {
+    console.error('Erreur vérification exercice:', error);
+    res.status(500).json({ message: 'Erreur lors de la vérification' });
+  }
+};
