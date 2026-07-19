@@ -33,6 +33,8 @@ async function analyzeDocument(documentId, userId) {
 
   await Resume.create('court', summaryShort, documentId);
   await Resume.create('detaillé', summaryLong, documentId);
+  await Resume.create('points_cles', JSON.stringify(keyPoints), documentId);
+  await Resume.create('definitions', JSON.stringify(definitions), documentId);
 
   return { summaryShort, summaryLong, keyPoints, definitions };
 }

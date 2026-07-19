@@ -7,7 +7,8 @@ import api from '@/lib/api';
 import {
   Brain, Search, Plus, Upload, FileText, Sparkles, ChevronRight, X, Loader2,
   BookOpen, Bot, CalendarDays, Bell, Settings, LogOut, Home, Layers, MessageSquare,
-  Award, Zap, CheckCircle, ClipboardList, PenTool, ListChecks, AlertCircle
+  Award, Zap, CheckCircle, ClipboardList, PenTool, ListChecks, AlertCircle,
+  Eye, Trash2, Clock, FileCheck
 } from 'lucide-react';
 
 // ============================================
@@ -208,6 +209,7 @@ export default function MatieresPage() {
   const [documents, setDocuments] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [loadingAnalysis, setLoadingAnalysis] = useState(false);
 
   // Quiz
   const [selectedQuizDoc, setSelectedQuizDoc] = useState('');
@@ -316,6 +318,19 @@ export default function MatieresPage() {
     setExerciseAnswers({});
     setExerciseResults({});
     setShowCorrection(false);
+  };
+
+  const handleViewAnalysis = async (docId) => {
+    setLoadingAnalysis(true);
+    try {
+      const res = await api.get(`/ai/analysis/${docId}`);
+      setAnalysisResult(res.data);
+    } catch (err) {
+      console.error('Erreur récupération analyse:', err);
+      alert('Aucune analyse disponible pour ce document.');
+    } finally {
+      setLoadingAnalysis(false);
+    }
   };
 
   // Quiz
@@ -595,6 +610,64 @@ export default function MatieresPage() {
               </p>
             )}
           </div>
+
+          {/* LISTE DES DOCUMENTS */}
+          {documents.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-500" />
+                Documents déposés
+                <span className="text-sm font-normal text-gray-400 ml-1">({documents.length})</span>
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {documents.map((doc) => (
+                  <div
+                    key={doc.id}
+                    className={`bg-white rounded-2xl border p-5 shadow-sm transition-all duration-200 ${
+                      doc.has_resume
+                        ? 'border-blue-200 hover:shadow-md hover:border-blue-300 cursor-pointer'
+                        : 'border-gray-100'
+                    }`}
+                    onClick={() => doc.has_resume && handleViewAnalysis(doc.id)}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className={`p-2.5 rounded-xl shrink-0 ${doc.has_resume ? 'bg-blue-50' : 'bg-gray-100'}`}>
+                          {doc.has_resume ? (
+                            <FileCheck className="w-5 h-5 text-blue-600" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-gray-800 truncate text-sm">{doc.nom_fichier}</p>
+                          <p className="text-xs text-gray-400 mt-0.5 flex items-center gap-1">
+                            <Clock className="w-3 h-3" />
+                            {new Date(doc.uploaded_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    {doc.has_resume ? (
+                      <button
+                        disabled={loadingAnalysis}
+                        className="mt-3 w-full flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl text-sm font-medium hover:bg-blue-100 transition-all disabled:opacity-50"
+                      >
+                        {loadingAnalysis ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Eye className="w-4 h-4" />
+                        )}
+                        Voir l'analyse IA
+                      </button>
+                    ) : (
+                      <p className="mt-3 text-xs text-gray-400 text-center italic">Non analysé</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* RÉSULTATS IA */}
           <div className="mb-8">
