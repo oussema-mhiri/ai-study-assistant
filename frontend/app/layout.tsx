@@ -1,6 +1,7 @@
 // frontend/app/layout.tsx
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
+import { ChatProvider } from '../context/ChatContext';
 import { Toaster } from 'react-hot-toast';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import type { Metadata } from 'next';
@@ -20,8 +21,10 @@ export default function RootLayout({
       <body>
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID as string}>
           <AuthProvider>
-            {children}
-            <Toaster position="top-right" />
+            <ChatProvider>
+              {children}
+              <Toaster position="top-right" />
+            </ChatProvider>
           </AuthProvider>
         </GoogleOAuthProvider>
       </body>

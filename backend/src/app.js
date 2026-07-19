@@ -63,6 +63,8 @@ const aiRoutes = require('./routes/aiRoutes');
 app.use('/api/ai', aiRoutes);
 const exerciseRoutes = require('./routes/exerciseRoutes');
 app.use('/api/exercises', exerciseRoutes);
+const chatbotRoutes = require('./routes/chatbotRoutes');
+app.use('/api/chatbot', chatbotRoutes);
 // Démarrer le serveur
 app.listen(port, () => {
   console.log(`Serveur démarré sur http://localhost:${port}`);

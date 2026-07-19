@@ -267,6 +267,50 @@ async function checkExerciseAnswer(question, userAnswer, correctAnswer) {
     };
   }
 }
+// --- Chatbot en Streaming ---
+async function chatWithContextStream(question, context, history = [], imageBase64 = null) {
+  const formattedHistory = history.length > 0
+    ? history.map(msg => `${msg.sender === 'user' ? 'Étudiant' : 'IA'}: ${msg.content}`).join('\n')
+    : 'Aucun historique.';
+
+  const prompt = `
+Tu es un assistant pédagogique universitaire spécialisé dans l'accompagnement des étudiants.
+Tu dois répondre aux questions de l'étudiant en te basant UNIQUEMENT sur les documents fournis dans le contexte ci-dessous.
+Cite les sources (noms de fichiers ou concepts) quand c'est possible.
+Si la réponse ne se trouve pas dans les documents du contexte, réponds exactement : "Je n'ai pas trouvé cette information dans vos cours. Pouvez-vous préciser votre question ?"
+
+### Contexte (Documents du cours) :
+${context || 'Aucun document n\'a été importé pour cette matière.'}
+
+### Historique de la conversation :
+${formattedHistory}
+
+### Question de l'étudiant :
+${question}
+
+### Réponse :
+`;
+
+  const contents = [];
+  if (imageBase64) {
+    // Si l'image contient l'en-tête data:image/png;base64, on l'extrait
+    const mimeMatch = imageBase64.match(/^data:(image\/[a-zA-Z+-\.]+);base64,/);
+    const mimeType = mimeMatch ? mimeMatch[1] : 'image/png';
+    const base64Data = imageBase64.split(',')[1] || imageBase64;
+    
+    contents.push({
+      inlineData: {
+        mimeType,
+        data: base64Data
+      }
+    });
+  }
+  contents.push(prompt);
+
+  const result = await model.generateContentStream(contents);
+  return result.stream;
+}
+
 module.exports = {
   testGemini,
   generateSummary,
@@ -274,6 +318,7 @@ module.exports = {
   extractDefinitions,
   analyzeImage,
   chatWithContext,
+  chatWithContextStream,
   generateQuizFromText,
   generateExercisesFromText,
   checkExerciseAnswers,

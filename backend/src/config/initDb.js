@@ -95,6 +95,34 @@ const createTables = async () => {
   `;
 
   // ================================
+  // 6b. Table CONVERSATIONS
+  // ================================
+  const createConversationsTable = `
+    CREATE TABLE IF NOT EXISTS conversations (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      matiere_id INTEGER REFERENCES matieres(id) ON DELETE CASCADE,
+      document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+      titre VARCHAR(255) NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
+  // 6c. Table MESSAGES
+  // ================================
+  const createMessagesTable = `
+    CREATE TABLE IF NOT EXISTS messages (
+      id SERIAL PRIMARY KEY,
+      conversation_id INTEGER REFERENCES conversations(id) ON DELETE CASCADE,
+      sender VARCHAR(20) NOT NULL,
+      content TEXT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
   // 7. Migration (pour les bases existantes)
   // ================================
   const migrateExistingTable = `
@@ -102,6 +130,7 @@ const createTables = async () => {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
+    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE;
   `;
 
   try {
@@ -122,6 +151,12 @@ const createTables = async () => {
 
     await pool.query(createQuestionTable);
     console.log('✅ Table "questions" créée ou déjà existante');
+
+    await pool.query(createConversationsTable);
+    console.log('✅ Table "conversations" créée ou déjà existante');
+
+    await pool.query(createMessagesTable);
+    console.log('✅ Table "messages" créée ou déjà existante');
 
     await pool.query(migrateExistingTable);
     console.log('✅ Colonnes Google OAuth et reset password vérifiées/ajoutées');
