@@ -95,7 +95,55 @@ const createTables = async () => {
   `;
 
   // ================================
-  // 6b. Table CONVERSATIONS
+  // 6b. Table QUIZ_RESULTS
+  // ================================
+  const createQuizResultsTable = `
+    CREATE TABLE IF NOT EXISTS quiz_results (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      quiz_id INTEGER REFERENCES quizs(id) ON DELETE CASCADE,
+      question_id INTEGER REFERENCES questions(id) ON DELETE CASCADE,
+      reponse_donnee TEXT,
+      est_correct BOOLEAN NOT NULL DEFAULT false,
+      answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
+  // 6c. Table SESSIONS_PLANNING
+  // ================================
+  const createSessionsPlanningTable = `
+    CREATE TABLE IF NOT EXISTS sessions_planning (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      matiere_id INTEGER REFERENCES matieres(id) ON DELETE CASCADE,
+      date_session DATE NOT NULL,
+      heure_debut TIME,
+      duree_minutes INTEGER DEFAULT 60,
+      type VARCHAR(20) DEFAULT 'revision',
+      titre VARCHAR(255),
+      statut VARCHAR(20) DEFAULT 'planifie',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
+  // 6d. Table NOTIFICATIONS
+  // ================================
+  const createNotificationsTable = `
+    CREATE TABLE IF NOT EXISTS notifications (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      titre VARCHAR(255) NOT NULL,
+      message TEXT NOT NULL,
+      type VARCHAR(30) DEFAULT 'rappel',
+      lue BOOLEAN DEFAULT false,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
+  // 6e. Table CONVERSATIONS
   // ================================
   const createConversationsTable = `
     CREATE TABLE IF NOT EXISTS conversations (
@@ -130,7 +178,11 @@ const createTables = async () => {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS google_id VARCHAR(255) UNIQUE;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token VARCHAR(255);
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS ia_level VARCHAR(20) DEFAULT 'Moyen';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS response_mode VARCHAR(20) DEFAULT 'Détaillé';
     ALTER TABLE conversations ADD COLUMN IF NOT EXISTS document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE;
+    ALTER TABLE matieres ADD COLUMN IF NOT EXISTS date_examen DATE;
+    ALTER TABLE matieres ADD COLUMN IF NOT EXISTS couleur VARCHAR(20) DEFAULT '#3B82F6';
   `;
 
   try {
@@ -157,6 +209,15 @@ const createTables = async () => {
 
     await pool.query(createMessagesTable);
     console.log('✅ Table "messages" créée ou déjà existante');
+
+    await pool.query(createQuizResultsTable);
+    console.log('✅ Table "quiz_results" créée ou déjà existante');
+
+    await pool.query(createSessionsPlanningTable);
+    console.log('✅ Table "sessions_planning" créée ou déjà existante');
+
+    await pool.query(createNotificationsTable);
+    console.log('✅ Table "notifications" créée ou déjà existante');
 
     await pool.query(migrateExistingTable);
     console.log('✅ Colonnes Google OAuth et reset password vérifiées/ajoutées');

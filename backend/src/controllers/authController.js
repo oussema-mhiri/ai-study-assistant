@@ -7,6 +7,8 @@ const { sendResetCodeEmail } = require('../services/emailService');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 // =============================================
 // 1. INSCRIPTION
 // =============================================
@@ -16,6 +18,14 @@ exports.register = async (req, res) => {
 
     if (!fullName || !email || !password) {
       return res.status(400).json({ message: 'Nom, email et mot de passe sont requis.' });
+    }
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Format d\'email invalide.' });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ message: 'Le mot de passe doit contenir au moins 6 caractères.' });
     }
 
     const existingUser = await User.findByEmail(email);
@@ -52,6 +62,10 @@ exports.login = async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ message: 'Email et mot de passe requis.' });
+    }
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({ message: 'Format d\'email invalide.' });
     }
 
     const user = await User.findByEmail(email);
@@ -130,50 +144,32 @@ exports.googleAuth = async (req, res) => {
 };
 
 // =============================================
-// 4. DEMANDE DE CODE (Étape 1) AVEC LOG
+// 4. DEMANDE DE CODE (Étape 1)
 // =============================================
 exports.requestResetCode = async (req, res) => {
-  console.log('📧 Avant envoi email');
-try {
-  await sendResetCodeEmail(user.email, code);
-  console.log('✅ Email envoyé avec succès');
-} catch (emailError) {
-  console.error('❌ ECHEC envoi email :', emailError.message);
-}
-  console.log('✅ Route /request-reset-code atteinte !');
   try {
     const { email } = req.body;
-    console.log(`📧 Email reçu : ${email}`);
     if (!email) return res.status(400).json({ message: 'Email requis.' });
 
     const user = await User.findByEmail(email);
     if (!user) {
-      console.log('❌ Utilisateur non trouvé');
       return res.status(404).json({ message: 'Aucun compte trouvé avec cet email.' });
     }
-    console.log(`✅ Utilisateur trouvé : ${user.email}`);
 
     const code = Math.floor(100000 + Math.random() * 900000).toString();
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
-    console.log(`🔢 Code généré : ${code}`);
 
     await User.setResetCode(user.id, code, expiresAt);
-    console.log('💾 Code enregistré en base');
 
-    // ⚠️ POUR LE TEST, ON AFFICHE LE CODE DANS LA CONSOLE
-    console.log(`📧 CODE POUR ${user.email} : ${code}`);
-
-    // On essaie d'envoyer l'email, mais si ça échoue, on le log
     try {
       await sendResetCodeEmail(user.email, code);
-      console.log('📧 Email envoyé (ou tentative)');
     } catch (emailError) {
-      console.error('❌ Erreur sendResetCodeEmail:', emailError.message);
+      console.error('Erreur envoi email reset:', emailError.message);
     }
 
     res.json({ message: 'Un code de réinitialisation a été envoyé à votre email.' });
   } catch (error) {
-    console.error('🔥 Erreur dans requestResetCode :', error);
+    console.error('Erreur requestResetCode:', error);
     res.status(500).json({ message: 'Erreur lors de l\'envoi du code.' });
   }
 };
@@ -242,5 +238,65 @@ exports.resetPassword = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: 'Erreur lors de la réinitialisation.' });
+  }
+};
+
+// =============================================
+// 7. MISE À JOUR DU PROFIL
+// =============================================
+exports.updateProfile = async (req, res) => {
+  try {
+    const { university, faculty, studyLevel, major } = req.body;
+
+    const updated = await User.updateProfile(
+      req.userId,
+      university || null,
+      faculty || null,
+      studyLevel || null,
+      major || null
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Erreur updateProfile:', error);
+    res.status(500).json({ message: 'Erreur lors de la mise à jour du profil.' });
+  }
+};
+
+// =============================================
+// 8. MISE À JOUR DES PRÉFÉRENCES IA
+// =============================================
+exports.updatePreferences = async (req, res) => {
+  try {
+    const { iaLevel, responseMode } = req.body;
+
+    const validLevels = ['Simple', 'Moyen', 'Avancé'];
+    const validModes = ['Court', 'Détaillé', 'Personnalisé'];
+
+    if (iaLevel && !validLevels.includes(iaLevel)) {
+      return res.status(400).json({ message: 'Niveau IA invalide.' });
+    }
+    if (responseMode && !validModes.includes(responseMode)) {
+      return res.status(400).json({ message: 'Mode de réponse invalide.' });
+    }
+
+    const updated = await User.updatePreferences(
+      req.userId,
+      iaLevel || 'Moyen',
+      responseMode || 'Détaillé'
+    );
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Erreur updatePreferences:', error);
+    res.status(500).json({ message: 'Erreur lors de la mise à jour des préférences.' });
   }
 };

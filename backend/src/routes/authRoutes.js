@@ -5,7 +5,9 @@ const {
   googleAuth,
   requestResetCode,
   verifyResetCode,
-  resetPassword
+  resetPassword,
+  updateProfile,
+  updatePreferences
 } = require('../controllers/authController');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
@@ -19,7 +21,7 @@ router.post('/request-reset-code', requestResetCode);
 router.post('/verify-reset-code', verifyResetCode);
 router.post('/reset-password', resetPassword);
 
-// Route protégée : récupérer l'utilisateur connecté
+// Routes protégées
 router.get('/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.userId);
@@ -32,5 +34,8 @@ router.get('/me', auth, async (req, res) => {
     res.status(500).json({ message: 'Erreur serveur' });
   }
 });
+
+router.put('/profile', auth, updateProfile);
+router.put('/preferences', auth, updatePreferences);
 
 module.exports = router;

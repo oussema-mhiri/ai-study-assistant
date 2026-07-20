@@ -5,8 +5,8 @@ const Resume = require('../models/Resume');
 exports.analyzeDocument = async (req, res) => {
   try {
     const { documentId } = req.body;
-    if (!documentId) {
-      return res.status(400).json({ message: 'documentId requis' });
+    if (!documentId || !Number.isInteger(Number(documentId)) || Number(documentId) <= 0) {
+      return res.status(400).json({ message: 'documentId requis et doit être un entier positif' });
     }
 
     const result = await analyzeDocument(documentId, req.userId);

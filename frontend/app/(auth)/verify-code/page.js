@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Key, Loader2, Brain, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -26,7 +26,7 @@ export default function VerifyCodePage() {
     setError('');
 
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/verify-reset-code', {
+      const res = await api.post('/auth/verify-reset-code', {
         email,
         code,
       });

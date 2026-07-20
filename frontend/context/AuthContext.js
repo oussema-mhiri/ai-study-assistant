@@ -11,19 +11,14 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  console.log('🔵 AuthProvider rendu');
-
   useEffect(() => {
-    console.log('🔄 useEffect Auth');
     const token = localStorage.getItem('token');
     if (token) {
       api.get('/auth/me')
         .then((res) => {
-          console.log('✅ Utilisateur chargé:', res.data);
           setUser(res.data);
         })
-        .catch((err) => {
-          console.error('❌ Erreur /auth/me:', err);
+        .catch(() => {
           localStorage.removeItem('token');
           setUser(null);
         })

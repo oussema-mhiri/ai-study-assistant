@@ -5,80 +5,13 @@ import { useChat } from '@/context/ChatContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
+import Sidebar from '@/components/Sidebar';
 import {
   Brain, Search, Plus, Send, Bot, Sparkles, History, Settings,
   Bell, LogOut, Home, Layers, MessageSquare, CalendarDays,
   ChevronDown, Loader2, User, Clock, BookOpen, Trash2, Paperclip, X, Info
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-
-// ============================================
-// SIDEBAR DE NAVIGATION PRINCIPALE
-// ============================================
-const navItems = [
-  { label: 'Tableau de bord', icon: Home, href: '/dashboard' },
-  { label: 'Matières', icon: Layers, href: '/matieres' },
-  { label: 'Chatbot IA', icon: MessageSquare, href: '/chatbot' },
-  { label: 'Planning', icon: CalendarDays, href: '/planning' },
-];
-
-const navFooterItems = [
-  { label: 'Notifications', icon: Bell, href: '/notifications' },
-  { label: 'Paramètres', icon: Settings, href: '/parametres' },
-];
-
-function Sidebar({ activePath, onLogout }) {
-  return (
-    <aside className="w-64 shrink-0 bg-white border-r border-gray-200 flex flex-col h-screen sticky top-0 px-5 py-7 shadow-sm z-20">
-      <div className="flex items-center gap-2.5 mb-10 px-2">
-        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md shadow-blue-200">
-          <Brain className="w-5 h-5 text-white" strokeWidth={2} />
-        </div>
-        <span className="text-lg font-bold text-gray-800 tracking-tight animate-fade-in">AI Study Assistant</span>
-      </div>
-
-      <nav className="flex flex-col gap-1.5 flex-1">
-        {navItems.map(({ label, icon: Icon, href }) => {
-          const active = activePath === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-                active
-                  ? 'bg-gradient-to-r from-blue-50 to-indigo-50/30 text-blue-700 shadow-sm border border-blue-100/30'
-                  : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-              }`}
-            >
-              <Icon className={`w-[18px] h-[18px] ${active ? 'text-blue-600' : 'text-gray-400'}`} strokeWidth={1.8} />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="flex flex-col gap-1.5 pt-4 border-t border-gray-100">
-        {navFooterItems.map(({ label, icon: Icon, href }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all duration-200"
-          >
-            <Icon className="w-[18px] h-[18px] text-gray-400" strokeWidth={1.8} />
-            {label}
-          </Link>
-        ))}
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-3.5 px-4 py-2.5 rounded-xl text-sm font-semibold text-gray-600 hover:bg-red-50 hover:text-red-600 transition-all duration-200 text-left mt-2"
-        >
-          <LogOut className="w-[18px] h-[18px] text-gray-400" strokeWidth={1.8} />
-          Déconnexion
-        </button>
-      </div>
-    </aside>
-  );
-}
 
 // ============================================
 // COMPOSANTS DE CHAT & RENDU MARKDOWN SIMPLE
@@ -92,16 +25,16 @@ function formatMarkdown(text) {
   formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre class="bg-zinc-900 text-zinc-100 p-4 rounded-xl overflow-x-auto my-3 text-xs font-mono shadow-inner border border-zinc-800">$1</pre>');
 
   // Code en ligne : `code`
-  formatted = formatted.replace(/`([^`]+)`/g, '<code class="bg-zinc-100 text-indigo-600 px-1.5 py-0.5 rounded font-mono text-xs border border-zinc-200/50">$1</code>');
+  formatted = formatted.replace(/`([^`]+)`/g, '<code class="bg-zinc-100 dark:bg-zinc-800 text-indigo-600 px-1.5 py-0.5 rounded font-mono text-xs border border-zinc-200/50 dark:border-zinc-700/50">$1</code>');
 
   // Gras : **text**
-  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-gray-950">$1</strong>');
+  formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong class="font-bold text-gray-950 dark:text-white">$1</strong>');
 
   // Listes à puces (lignes commençant par - ou *)
   formatted = formatted.split('\n').map(line => {
     const trimmed = line.trim();
     if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-      return `<li class="ml-5 list-disc my-1 text-gray-700 leading-relaxed">${trimmed.slice(2)}</li>`;
+      return `<li class="ml-5 list-disc my-1 text-gray-700 dark:text-gray-300 leading-relaxed">${trimmed.slice(2)}</li>`;
     }
     return line;
   }).join('\n');
@@ -117,7 +50,7 @@ function SuggestionButton({ icon: Icon, label, onClick }) {
   return (
     <button
       onClick={onClick}
-      className="flex items-center gap-2.5 px-4 py-3 bg-white border border-gray-200/80 rounded-2xl text-xs font-semibold text-gray-700 hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-200 shadow-sm hover:shadow-md text-left cursor-pointer"
+      className="flex items-center gap-2.5 px-4 py-3 bg-white dark:bg-gray-900 border border-gray-200/80 dark:border-gray-700/50 rounded-2xl text-xs font-semibold text-gray-700 dark:text-gray-300 hover:border-blue-500 hover:bg-blue-50/50 transition-all duration-200 shadow-sm hover:shadow-md text-left cursor-pointer"
     >
       <Icon className="w-4 h-4 text-blue-500 shrink-0" />
       <span className="truncate">{label}</span>
@@ -142,8 +75,8 @@ function AssistantMessage({ content, time, isStreaming }) {
       <div className="w-8.5 h-8.5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-blue-200 flex-shrink-0 mt-1">
         <Brain className="w-4 h-4 text-white" strokeWidth={2} />
       </div>
-      <div className="max-w-[75%] bg-white border border-gray-200/50 rounded-3xl rounded-tl-sm px-5 py-3.5 shadow-sm hover:shadow-md transition-shadow">
-        <div className="text-gray-700 text-sm leading-relaxed">
+      <div className="max-w-[75%] bg-white dark:bg-gray-900 border border-gray-200/50 dark:border-gray-700/50 rounded-3xl rounded-tl-sm px-5 py-3.5 shadow-sm hover:shadow-md transition-shadow">
+        <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
           {content === '...' ? (
             <div className="flex items-center gap-1.5 py-2 px-1">
               <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -154,7 +87,7 @@ function AssistantMessage({ content, time, isStreaming }) {
             formatMarkdown(content)
           )}
         </div>
-        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100/50 text-[10px] text-gray-400 font-medium">
+        <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100/50 dark:border-gray-700/50 text-[10px] text-gray-400 dark:text-gray-500 font-medium">
           <span>{time}</span>
           {isStreaming && (
             <span className="text-blue-500 font-semibold animate-pulse flex items-center gap-1">
@@ -317,7 +250,7 @@ export default function ChatbotPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
       </div>
     );
@@ -328,19 +261,19 @@ export default function ChatbotPage() {
   const firstName = user.full_name?.split(' ')[0] || 'Étudiant';
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       <Sidebar activePath="/chatbot" onLogout={logout} />
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* HEADER */}
-        <div className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm z-10">
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Assistant IA</h1>
-            <p className="text-sm text-gray-500">Posez vos questions sur vos cours et obtenez des réponses instantanées.</p>
+            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Assistant IA</h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Posez vos questions sur vos cours et obtenez des réponses instantanées.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors">
-              <Bell className="w-5 h-5 text-gray-500" />
+            <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
             </button>
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-blue-200">
               {firstName[0]?.toUpperCase()}
@@ -352,9 +285,9 @@ export default function ChatbotPage() {
         <div className="flex-1 flex overflow-hidden">
           
           {/* BARRE LATÉRALE HISTORIQUE DES CONVERSATIONS */}
-          <div className="w-76 bg-white border-r border-gray-200 flex flex-col h-full shrink-0 shadow-sm z-10">
-            <div className="p-4 border-b border-gray-100 flex justify-between items-center shrink-0">
-              <span className="text-xs font-bold text-gray-400 uppercase tracking-wider">Sessions de chat</span>
+          <div className="w-76 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full shrink-0 shadow-sm z-10">
+            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
+              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Sessions de chat</span>
               {selectedSubject && (
                 <button
                   onClick={handleNewConversation}
@@ -373,9 +306,9 @@ export default function ChatbotPage() {
                 </div>
               ) : conversations.length === 0 ? (
                 <div className="text-center py-16 px-4">
-                  <MessageSquare className="w-8 h-8 text-gray-300 mx-auto mb-3" />
-                  <p className="text-xs text-gray-400 leading-relaxed font-semibold">Aucune discussion active.</p>
-                  <p className="text-[10px] text-gray-400/80 leading-relaxed mt-1">Créez une session pour démarrer l'apprentissage.</p>
+                  <MessageSquare className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
+                  <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed font-semibold">Aucune discussion active.</p>
+                  <p className="text-[10px] text-gray-400/80 dark:text-gray-500/80 leading-relaxed mt-1">Créez une session pour démarrer l'apprentissage.</p>
                 </div>
               ) : (
                 conversations.map((conv) => {
@@ -386,15 +319,15 @@ export default function ChatbotPage() {
                       className={`group flex items-center justify-between p-3 rounded-2xl text-xs transition-all border cursor-pointer ${
                         isActive
                           ? 'bg-gradient-to-r from-blue-50/60 to-indigo-50/20 text-blue-700 font-bold border-blue-100 shadow-sm'
-                          : 'text-gray-600 border-transparent hover:bg-gray-50/80 hover:text-gray-900'
+                          : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-50/80 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                       }`}
                       onClick={() => selectConversation(conv)}
                     >
                       <div className="flex-1 min-w-0 pr-2">
-                        <div className="truncate text-gray-800 font-semibold">{conv.titre}</div>
+                        <div className="truncate text-gray-800 dark:text-gray-200 font-semibold">{conv.titre}</div>
                         {conv.document_nom && (
-                          <div className="text-[10px] text-zinc-400 font-medium truncate mt-1 flex items-center gap-1">
-                            <BookOpen className="w-2.5 h-2.5 text-zinc-400" />
+                          <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium truncate mt-1 flex items-center gap-1">
+                            <BookOpen className="w-2.5 h-2.5 text-zinc-400 dark:text-zinc-500" />
                             {conv.document_nom}
                           </div>
                         )}
@@ -406,7 +339,7 @@ export default function ChatbotPage() {
                             deleteConversation(conv.id);
                           }
                         }}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                         title="Supprimer la conversation"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
@@ -419,10 +352,10 @@ export default function ChatbotPage() {
           </div>
 
           {/* ESPACE DE DISCUSSION CENTRAL */}
-          <div className="flex-1 flex flex-col bg-gray-50/30 h-full overflow-hidden">
+          <div className="flex-1 flex flex-col bg-gray-50/30 dark:bg-gray-950 h-full overflow-hidden">
             
             {/* SÉLECTEURS DE CONTEXTE MATIÈRE ET DOCUMENT */}
-            <div className="bg-white border-b border-gray-100 px-6 py-3.5 flex items-center gap-3 shrink-0 shadow-sm z-10 flex-wrap">
+            <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-3.5 flex items-center gap-3 shrink-0 shadow-sm z-10 flex-wrap">
               {/* Sélecteur de matière */}
               <div className="relative">
                 <button
@@ -438,13 +371,13 @@ export default function ChatbotPage() {
                 </button>
 
                 {showSubjectSelector && subjects.length > 0 && (
-                  <div className="absolute left-0 mt-2 w-64 bg-white rounded-2xl shadow-lg border border-gray-100 py-1.5 z-20">
+                  <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1.5 z-20">
                     {subjects.map((s) => (
                       <button
                         key={s.id}
                         onClick={() => handleSubjectChange(s)}
                         className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-blue-50 transition-all ${
-                          selectedSubject?.id === s.id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700'
+                          selectedSubject?.id === s.id ? 'bg-blue-50 text-blue-700 font-bold' : 'text-gray-700 dark:text-gray-300'
                         }`}
                       >
                         {s.nom}
@@ -462,9 +395,9 @@ export default function ChatbotPage() {
                       setShowDocSelector(!showDocSelector);
                       setShowSubjectSelector(false);
                     }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 hover:bg-zinc-100/70 text-zinc-700 rounded-xl text-xs font-bold transition-all border border-zinc-200/50 shadow-sm cursor-pointer"
+                    className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100/70 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all border border-zinc-200/50 dark:border-zinc-700/50 shadow-sm cursor-pointer"
                   >
-                    <BookOpen className="w-4 h-4 text-zinc-500" />
+                    <BookOpen className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
                     <span className="max-w-[180px] truncate">
                       {selectedDoc ? selectedDoc.nom_fichier : 'Tous les documents'}
                     </span>
@@ -472,11 +405,11 @@ export default function ChatbotPage() {
                   </button>
 
                   {showDocSelector && (
-                    <div className="absolute left-0 mt-2 w-72 bg-white rounded-2xl shadow-lg border border-gray-100 py-1.5 z-20 max-h-60 overflow-y-auto">
+                    <div className="absolute left-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1.5 z-20 max-h-60 overflow-y-auto">
                       <button
                         onClick={() => handleDocChange(null)}
-                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-zinc-50 transition-all ${
-                          !selectedDoc ? 'bg-zinc-50 text-blue-700 font-bold' : 'text-zinc-700'
+                        className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all ${
+                          !selectedDoc ? 'bg-zinc-50 dark:bg-zinc-800 text-blue-700 font-bold' : 'text-zinc-700 dark:text-zinc-300'
                         }`}
                       >
                         Tous les documents ({documents.length})
@@ -485,8 +418,8 @@ export default function ChatbotPage() {
                         <button
                           key={doc.id}
                           onClick={() => handleDocChange(doc)}
-                          className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-zinc-50 transition-all ${
-                            selectedDoc?.id === doc.id ? 'bg-zinc-50 text-blue-700 font-bold' : 'text-zinc-700'
+                          className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all ${
+                            selectedDoc?.id === doc.id ? 'bg-zinc-50 dark:bg-zinc-800 text-blue-700 font-bold' : 'text-zinc-700 dark:text-zinc-300'
                           }`}
                         >
                           {doc.nom_fichier}
@@ -515,22 +448,22 @@ export default function ChatbotPage() {
             )}
 
             {/* MESSAGE CONTAINER */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-2 bg-gray-50/30">
+            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-2 bg-gray-50/30 dark:bg-gray-950">
               {loadingMessages ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
-                  <p className="text-sm text-gray-500 mt-2 font-medium">Chargement de l'historique...</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 font-medium">Chargement de l'historique...</p>
                 </div>
               ) : messages.length === 0 && !streamingMessage ? (
                 <div className="flex flex-col items-center justify-center h-full text-center max-w-lg mx-auto">
                   <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center mb-5 shadow-sm">
                     <Brain className="w-8 h-8 text-blue-600" strokeWidth={1.5} />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-800">Assistant IA Pédagogique 🎓</h2>
-                  <p className="text-sm text-gray-500 mt-2 leading-relaxed">
-                    Posez vos questions sur vos cours de <strong className="text-gray-800 font-bold">{selectedSubject?.nom}</strong>.
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Assistant IA Pédagogique 🎓</h2>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
+                    Posez vos questions sur vos cours de <strong className="text-gray-800 dark:text-gray-200 font-bold">{selectedSubject?.nom}</strong>.
                     {selectedDoc ? (
-                      <span> Le chatbot est actuellement configuré pour répondre uniquement sur le document <strong className="text-gray-800 font-bold">{selectedDoc.nom_fichier}</strong>.</span>
+                      <span> Le chatbot est actuellement configuré pour répondre uniquement sur le document <strong className="text-gray-800 dark:text-gray-200 font-bold">{selectedDoc.nom_fichier}</strong>.</span>
                     ) : (
                       <span> Le chatbot analysera l'ensemble de vos documents importés pour répondre.</span>
                     )}
@@ -569,9 +502,9 @@ export default function ChatbotPage() {
 
             {/* SUGGESTIONS INTELLIGENTES */}
             {messages.length === 0 && !streamingMessage && suggestions.length > 0 && (
-              <div className="px-6 py-4 bg-white border-t border-gray-100 shrink-0 shadow-inner">
+              <div className="px-6 py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0 shadow-inner">
                 <div className="max-w-4xl mx-auto">
-                  <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-gray-400 uppercase tracking-wider select-none">
+                  <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider select-none">
                     <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
                     <span>Questions suggérées pour réviser :</span>
                   </div>
@@ -590,7 +523,7 @@ export default function ChatbotPage() {
             )}
 
             {/* SAISIE DE TEXTE */}
-            <div className="px-6 py-4 bg-white border-t border-gray-100 shrink-0">
+            <div className="px-6 py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0">
               <div className="max-w-4xl mx-auto">
                 
                 {/* Aperçu de l'image sélectionnée */}
@@ -610,11 +543,11 @@ export default function ChatbotPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-3 bg-white border border-gray-200 rounded-2xl px-4 py-2 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
+                <div className="flex items-center gap-3 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-2 shadow-sm focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-500/20 transition-all">
                   <button
                     onClick={() => imageInputRef.current?.click()}
                     disabled={!activeConversation || !!streamingMessage}
-                    className="p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all disabled:opacity-40 disabled:hover:bg-transparent shrink-0 cursor-pointer"
+                    className="p-2.5 text-gray-400 dark:text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-all disabled:opacity-40 disabled:hover:bg-transparent shrink-0 cursor-pointer"
                     title="Ajouter une image (notes scannées, schémas)"
                   >
                     <Paperclip className="w-4 h-4" />
@@ -640,7 +573,7 @@ export default function ChatbotPage() {
                         : "Sélectionnez une matière pour démarrer"
                     }
                     disabled={!activeConversation || !!streamingMessage}
-                    className="flex-1 py-2.5 text-sm text-gray-800 bg-transparent outline-none placeholder:text-gray-400 disabled:cursor-not-allowed"
+                    className="flex-1 py-2.5 text-sm text-gray-800 dark:text-white bg-transparent outline-none placeholder:text-gray-400 dark:placeholder:text-gray-500 disabled:cursor-not-allowed"
                   />
                   <button
                     onClick={handleSendMessage}
@@ -651,7 +584,7 @@ export default function ChatbotPage() {
                   </button>
                 </div>
                 
-                <div className="text-center text-[10px] text-gray-400 font-medium mt-2">
+                <div className="text-center text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-2">
                   L'IA s'appuie sur le contexte choisi (matière et/ou document) pour générer ses explications.
                 </div>
               </div>

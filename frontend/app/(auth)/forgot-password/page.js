@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Mail, Loader2, Brain, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -17,7 +17,7 @@ export default function ForgotPasswordPage() {
     setError('');
 
     try {
-      await axios.post('http://localhost:5000/api/auth/request-reset-code', { email });
+      await api.post('/auth/request-reset-code', { email });
       // Rediriger vers la page de vérification
       router.push(`/verify-code?email=${encodeURIComponent(email)}`);
     } catch (err) {

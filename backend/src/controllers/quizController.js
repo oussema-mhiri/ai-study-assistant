@@ -7,8 +7,18 @@ const { extractTextFromFile } = require('../services/extractService');
 exports.generateQuiz = async (req, res) => {
   try {
     const { documentId, numQuestions = 5, difficulty = 'Moyen' } = req.body;
-    if (!documentId) {
-      return res.status(400).json({ message: 'documentId requis' });
+    if (!documentId || !Number.isInteger(Number(documentId)) || Number(documentId) <= 0) {
+      return res.status(400).json({ message: 'documentId requis et doit être un entier positif' });
+    }
+
+    const validDifficulties = ['Facile', 'Moyen', 'Difficile'];
+    if (!validDifficulties.includes(difficulty)) {
+      return res.status(400).json({ message: 'difficulty doit être Facile, Moyen ou Difficile' });
+    }
+
+    const qCount = parseInt(numQuestions);
+    if (isNaN(qCount) || qCount < 1 || qCount > 50) {
+      return res.status(400).json({ message: 'numQuestions doit être entre 1 et 50' });
     }
 
     // 1. Récupérer le document

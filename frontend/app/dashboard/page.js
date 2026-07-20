@@ -5,6 +5,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
+import Sidebar from '@/components/Sidebar';
 import {
   FileText, BookOpen, Clock, Upload, Bot, CalendarPlus, BarChart3,
   Bell, Search, LogOut, Home, Layers, MessageSquare, CalendarDays,
@@ -37,92 +38,23 @@ const SHORTCUTS = [
 ];
 
 // ============================================
-// SIDEBAR
-// ============================================
-
-const navItems = [
-  { label: 'Tableau de bord', icon: Home, href: '/dashboard' },
-  { label: 'Matières', icon: Layers, href: '/matieres' },
-  { label: 'Chatbot IA', icon: MessageSquare, href: '/chatbot' },
-  { label: 'Planning', icon: CalendarDays, href: '/planning' },
-];
-
-const navFooterItems = [
-  { label: 'Notifications', icon: Bell, href: '/notifications' },
-  { label: 'Paramètres', icon: Settings, href: '/parametres' },
-];
-
-function Sidebar({ activePath, onLogout }) {
-  return (
-    <aside className="w-64 shrink-0 bg-white border-r border-gray-100 flex flex-col h-screen sticky top-0 px-4 py-6">
-      <div className="flex items-center gap-2 mb-8 px-2">
-        <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
-          <Brain className="w-4 h-4 text-white" strokeWidth={2} />
-        </div>
-        <span className="font-bold text-gray-800">AI Study Assistant</span>
-      </div>
-
-      <nav className="flex flex-col gap-1 flex-1">
-        {navItems.map(({ label, icon: Icon, href }) => {
-          const active = activePath === href;
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition ${
-                active
-                  ? 'bg-blue-50 text-blue-600 font-semibold'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <Icon className="w-[18px] h-[18px]" />
-              {label}
-            </Link>
-          );
-        })}
-      </nav>
-
-      <div className="flex flex-col gap-1 pt-3 border-t border-gray-100">
-        {navFooterItems.map(({ label, icon: Icon, href }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-gray-50 transition"
-          >
-            <Icon className="w-[18px] h-[18px]" />
-            {label}
-          </Link>
-        ))}
-        <button
-          onClick={onLogout}
-          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-gray-600 hover:bg-red-50 hover:text-red-600 transition text-left"
-        >
-          <LogOut className="w-[18px] h-[18px]" />
-          Déconnexion
-        </button>
-      </div>
-    </aside>
-  );
-}
-
-// ============================================
 // COMPOSANTS DE CONTENU
 // ============================================
 
 function StatCard({ title, value, icon: Icon, trend, loading }) {
   return (
-    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition duration-200">
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-md transition duration-200 dark:bg-gray-900 dark:border-gray-800">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-sm text-gray-500 font-medium">{title}</p>
+          <p className="text-sm text-gray-500 font-medium dark:text-gray-400">{title}</p>
           {loading ? (
-            <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+            <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1 dark:bg-gray-800" />
           ) : (
-            <p className="text-3xl font-bold text-gray-900 mt-1">{value}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1 dark:text-white">{value}</p>
           )}
           {!loading && trend && <p className="text-xs text-green-600 mt-1">{trend}</p>}
         </div>
-        <div className="p-3 bg-blue-50 rounded-xl">
+        <div className="p-3 bg-blue-50 rounded-xl dark:bg-blue-950/30">
           <Icon className="w-5 h-5 text-blue-600" />
         </div>
       </div>
@@ -188,11 +120,11 @@ function SubjectDonut({ name, progress, lastActivity }) {
           />
         </svg>
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-sm font-bold text-gray-900">{progress}%</span>
+          <span className="text-sm font-bold text-gray-900 dark:text-white">{progress}%</span>
         </div>
       </div>
-      <p className="text-sm font-medium text-gray-800">{name}</p>
-      {lastActivity && <p className="text-xs text-gray-400 mt-0.5">{lastActivity}</p>}
+      <p className="text-sm font-medium text-gray-800 dark:text-gray-200">{name}</p>
+      {lastActivity && <p className="text-xs text-gray-400 mt-0.5 dark:text-gray-500">{lastActivity}</p>}
     </div>
   );
 }
@@ -214,7 +146,7 @@ export default function DashboardPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
       </div>
     );
@@ -225,30 +157,30 @@ export default function DashboardPage() {
   const firstName = user.full_name?.split(' ')[0] || 'Étudiant';
 
   return (
-    <div className="min-h-screen bg-white flex">
+    <div className="min-h-screen bg-white flex dark:bg-gray-950">
       <Sidebar activePath="/dashboard" onLogout={logout} />
 
       <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Bonjour, {firstName} 👋</h1>
-            <p className="text-sm text-gray-500 mt-1">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Bonjour, {firstName} 👋</h1>
+            <p className="text-sm text-gray-500 mt-1 dark:text-gray-400">
               Centralisez votre apprentissage, organisez vos cours et boostez vos résultats avec l'IA.
             </p>
           </div>
 
           <div className="flex items-center gap-4">
             <div className="relative hidden sm:block">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 dark:text-gray-500" />
               <input
                 type="text"
                 placeholder="Rechercher..."
-                className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl w-48 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl w-48 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500 dark:focus:border-blue-400"
               />
             </div>
-            <button className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition">
-              <Bell className="w-5 h-5 text-gray-500" />
+            <button className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition dark:hover:bg-gray-800">
+              <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                 3
               </span>
@@ -287,7 +219,7 @@ export default function DashboardPage() {
         {/* Raccourcis rapides */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-gray-800">Raccourcis rapides</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Raccourcis rapides</p>
             <Link href="#" className="text-xs text-blue-600 hover:underline font-medium">
               Voir tout
             </Link>
@@ -300,9 +232,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Aperçu des matières */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 dark:bg-gray-900 dark:border-gray-800">
           <div className="flex items-center justify-between mb-5">
-            <p className="text-sm font-semibold text-gray-800">Aperçu des matières</p>
+            <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">Aperçu des matières</p>
             <Link href="/matieres" className="text-xs text-blue-600 hover:underline font-medium flex items-center gap-1">
               Voir toutes
               <ChevronRight className="w-3 h-3" />
@@ -315,7 +247,7 @@ export default function DashboardPage() {
             </div>
           ) : SUBJECTS_DATA.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-sm text-gray-400 mb-3">Aucune matière pour l'instant.</p>
+              <p className="text-sm text-gray-400 mb-3 dark:text-gray-500">Aucune matière pour l'instant.</p>
               <Link
                 href="/matieres"
                 className="inline-flex items-center gap-1 text-sm text-blue-600 font-medium hover:underline"
@@ -339,7 +271,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Petit message de motivation en bas */}
-        <div className="mt-6 flex items-center gap-2 text-xs text-gray-400 border-t border-gray-100 pt-4">
+        <div className="mt-6 flex items-center gap-2 text-xs text-gray-400 border-t border-gray-100 pt-4 dark:text-gray-500 dark:border-gray-800">
           <Sparkles className="w-3 h-3 text-blue-500" />
           <span>Continuez votre progression ! </span>
           <span className="text-blue-600 font-medium">{STATS_DATA.subjectsCount} matières</span>

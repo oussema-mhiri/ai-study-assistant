@@ -2,13 +2,13 @@ const pool = require('../config/db');
 
 const Matiere = {
   // Créer une matière
-  create: async (nom, description, userId) => {
+  create: async (nom, description, userId, dateExamen = null, couleur = '#3B82F6') => {
     const query = `
-      INSERT INTO matieres (nom, description, user_id)
-      VALUES ($1, $2, $3)
-      RETURNING id, nom, description, user_id, created_at, updated_at
+      INSERT INTO matieres (nom, description, user_id, date_examen, couleur)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id, nom, description, user_id, date_examen, couleur, created_at, updated_at
     `;
-    const result = await pool.query(query, [nom, description, userId]);
+    const result = await pool.query(query, [nom, description, userId, dateExamen, couleur]);
     return result.rows[0];
   },
 
@@ -40,16 +40,18 @@ const Matiere = {
   },
 
   // Mettre à jour une matière
-  update: async (id, userId, { nom, description }) => {
+  update: async (id, userId, { nom, description, dateExamen, couleur }) => {
     const query = `
       UPDATE matieres
       SET nom = COALESCE($1, nom),
           description = COALESCE($2, description),
+          date_examen = COALESCE($3, date_examen),
+          couleur = COALESCE($4, couleur),
           updated_at = CURRENT_TIMESTAMP
-      WHERE id = $3 AND user_id = $4
-      RETURNING id, nom, description, user_id, created_at, updated_at
+      WHERE id = $5 AND user_id = $6
+      RETURNING id, nom, description, user_id, date_examen, couleur, created_at, updated_at
     `;
-    const result = await pool.query(query, [nom, description, id, userId]);
+    const result = await pool.query(query, [nom, description, dateExamen, couleur, id, userId]);
     return result.rows[0];
   },
 

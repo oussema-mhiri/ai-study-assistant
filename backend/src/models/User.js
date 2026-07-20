@@ -24,7 +24,7 @@ const User = {
   // Trouver un utilisateur par ID
   findById: async (id) => {
     const query = `
-      SELECT id, full_name, email, university, faculty, study_level, major, created_at 
+      SELECT id, full_name, email, university, faculty, study_level, major, ia_level, response_mode, created_at 
       FROM users WHERE id = $1
     `;
     const result = await pool.query(query, [id]);
@@ -119,6 +119,28 @@ const User = {
       WHERE id = $1
     `;
     await pool.query(query, [userId]);
+  },
+
+  // Mettre à jour le profil (université, faculté, niveau, filière)
+  updateProfile: async (userId, university, faculty, studyLevel, major) => {
+    const query = `
+      UPDATE users SET university = $1, faculty = $2, study_level = $3, major = $4, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $5
+      RETURNING id, full_name, email, university, faculty, study_level, major, ia_level, response_mode, created_at
+    `;
+    const result = await pool.query(query, [university, faculty, studyLevel, major, userId]);
+    return result.rows[0];
+  },
+
+  // Mettre à jour les préférences IA
+  updatePreferences: async (userId, iaLevel, responseMode) => {
+    const query = `
+      UPDATE users SET ia_level = $1, response_mode = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+      RETURNING id, full_name, email, university, faculty, study_level, major, ia_level, response_mode, created_at
+    `;
+    const result = await pool.query(query, [iaLevel, responseMode, userId]);
+    return result.rows[0];
   },
 };
 

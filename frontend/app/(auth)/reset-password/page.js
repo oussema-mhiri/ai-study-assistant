@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import axios from 'axios';
+import api from '@/lib/api';
 import { Lock, Loader2, CheckCircle, Brain, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -40,7 +40,7 @@ export default function ResetPasswordPage() {
     try {
       const tempToken = sessionStorage.getItem('resetTempToken');
 
-      await axios.post('http://localhost:5000/api/auth/reset-password', {
+      await api.post('/auth/reset-password', {
         tempToken,
         newPassword: password,
       });

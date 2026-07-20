@@ -5,8 +5,18 @@ const { generateExercisesFromText, checkExerciseAnswers } = require('../services
 exports.generateExercises = async (req, res) => {
   try {
     const { documentId, numExercises = 3, difficulty = 'Moyen' } = req.body;
-    if (!documentId) {
-      return res.status(400).json({ message: 'documentId requis' });
+    if (!documentId || !Number.isInteger(Number(documentId)) || Number(documentId) <= 0) {
+      return res.status(400).json({ message: 'documentId requis et doit être un entier positif' });
+    }
+
+    const validDifficulties = ['Facile', 'Moyen', 'Difficile'];
+    if (!validDifficulties.includes(difficulty)) {
+      return res.status(400).json({ message: 'difficulty doit être Facile, Moyen ou Difficile' });
+    }
+
+    const exCount = parseInt(numExercises);
+    if (isNaN(exCount) || exCount < 1 || exCount > 20) {
+      return res.status(400).json({ message: 'numExercises doit être entre 1 et 20' });
     }
 
     // 1. Récupérer le document
@@ -46,20 +56,5 @@ exports.checkExercises = async (req, res) => {
   } catch (error) {
     console.error('Erreur correction exercices:', error);
     res.status(500).json({ message: error.message || 'Erreur lors de la correction des exercices' });
-  }
-};
-const { checkExerciseAnswer } = require('../services/geminiService');
-
-exports.checkExercise = async (req, res) => {
-  try {
-    const { question, userAnswer, correctAnswer } = req.body;
-    if (!question || !userAnswer || !correctAnswer) {
-      return res.status(400).json({ message: 'question, userAnswer et correctAnswer requis' });
-    }
-    const result = await checkExerciseAnswer(question, userAnswer, correctAnswer);
-    res.json(result);
-  } catch (error) {
-    console.error('Erreur vérification exercice:', error);
-    res.status(500).json({ message: 'Erreur lors de la vérification' });
   }
 };
