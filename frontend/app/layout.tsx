@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr" suppressHydrationWarning>
-      <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 overflow-x-hidden">
         <Script
           id="theme-init"
           strategy="beforeInteractive"

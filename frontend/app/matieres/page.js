@@ -932,8 +932,24 @@ export default function MatieresPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      <div className="min-h-screen bg-white flex dark:bg-gray-950">
+        <div className="hidden lg:block w-64 min-h-screen bg-gray-50 dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 p-4 space-y-3">
+          <div className="h-8 w-32 skeleton" />
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="h-10 w-full skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="flex-1 p-4 sm:p-6 lg:p-10">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <div className="h-8 w-48 skeleton" />
+            <div className="h-4 w-64 skeleton" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-24 skeleton rounded-2xl" />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -951,27 +967,27 @@ export default function MatieresPage() {
     <div className="min-h-screen bg-white flex dark:bg-gray-950">
       <Sidebar activePath="/matieres" onLogout={logout} />
 
-      <main className="flex-1 p-6 lg:p-10">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10">
         <div className="max-w-7xl mx-auto">
           {/* HEADER */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Layers className="w-6 h-6 text-blue-600" />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Layers className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
                 Gestion des matières
               </h1>
-              <p className="text-gray-500 mt-0.5 dark:text-gray-400">Gérez vos matières et importez vos documents pour l'analyse IA.</p>
+              <p className="text-gray-500 mt-0.5 dark:text-gray-400 text-xs sm:text-sm">Gérez vos matières et importez vos documents.</p>
             </div>
-            <div className="flex items-center gap-4">
-              <Link href="/notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors dark:hover:bg-gray-800">
-                <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <div className="flex items-center gap-3 sm:gap-4">
+              <Link href="/notifications" className="relative w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors dark:hover:bg-gray-800">
+                <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" />
                 {unreadCount > 0 && (
                   <span className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
               </Link>
-              <Link href="/parametres" className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-md shadow-blue-200 dark:shadow-none cursor-pointer hover:opacity-90 transition">
+              <Link href="/parametres" className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-md shadow-blue-200 dark:shadow-none cursor-pointer hover:opacity-90 transition">
                 {user.full_name?.[0]?.toUpperCase() || 'U'}
               </Link>
             </div>
@@ -980,7 +996,7 @@ export default function MatieresPage() {
           {/* AJOUT / SÉLECTION MATIÈRE */}
           <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8 dark:bg-gray-900 dark:border-gray-800">
             <div className="flex flex-wrap items-center gap-3">
-              <div className="flex-1 min-w-[200px] relative">
+              <div className="flex-1 min-w-0 sm:min-w-[200px] relative">
                 <Plus className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
@@ -1245,7 +1261,7 @@ export default function MatieresPage() {
               <select
                 value={selectedQuizDoc}
                 onChange={(e) => setSelectedQuizDoc(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white w-full sm:w-auto sm:min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               >
                 <option value="">Sélectionner un document</option>
                 {documents.map((doc) => (
@@ -1415,7 +1431,7 @@ export default function MatieresPage() {
               <select
                 value={selectedTFDoc}
                 onChange={(e) => setSelectedTFDoc(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 bg-white min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-500 bg-white w-full sm:w-auto sm:min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               >
                 <option value="">Sélectionner un document</option>
                 {documents.map((doc) => (
@@ -1585,7 +1601,7 @@ export default function MatieresPage() {
               <select
                 value={selectedExerciseDoc}
                 onChange={(e) => setSelectedExerciseDoc(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white w-full sm:w-auto sm:min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               >
                 <option value="">Sélectionner un document</option>
                 {documents.map((doc) => (
@@ -1779,7 +1795,7 @@ export default function MatieresPage() {
                 </div>
 
                 {/* Boutons d'action */}
-                <div className="mt-4 flex gap-3">
+                <div className="mt-4 flex flex-wrap gap-3">
                   {!showCorrection ? (
                     <button
                       onClick={handleCheckExercises}
@@ -1841,7 +1857,7 @@ export default function MatieresPage() {
               <select
                 value={selectedFlashcardDoc}
                 onChange={(e) => setSelectedFlashcardDoc(e.target.value)}
-                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
+                className="border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 bg-white w-full sm:w-auto sm:min-w-[180px] text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
               >
                 <option value="">Sélectionner un document</option>
                 {documents.map((doc) => (
@@ -1995,8 +2011,8 @@ export default function MatieresPage() {
 
           {/* Modal de révision flashcards */}
           {showFlashcardReview && dueCards.length > 0 && (
-            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-6">
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-fade-in">
+              <div className="bg-white dark:bg-gray-900 rounded-2xl shadow-2xl max-w-lg w-full p-4 sm:p-6 max-h-[90vh] overflow-y-auto">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="font-semibold text-gray-800 dark:text-gray-200">
                     Révision — {currentCardIndex + 1}/{dueCards.length}
@@ -2007,31 +2023,29 @@ export default function MatieresPage() {
                 </div>
                 <div
                   onClick={() => setIsCardFlipped(!isCardFlipped)}
-                  className={`relative h-64 cursor-pointer rounded-xl border-2 transition-all duration-500 ${
-                    isCardFlipped
-                      ? 'bg-violet-50 border-violet-300 dark:bg-violet-950/30 dark:border-violet-700'
-                      : 'bg-blue-50 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700'
-                  }`}
+                  className="relative h-48 sm:h-64 cursor-pointer flashcard-container"
+                  style={{ perspective: '1000px' }}
                 >
-                  <div className="absolute inset-0 flex items-center justify-center p-6">
-                    {!isCardFlipped ? (
+                  <div className={`flashcard-card w-full h-full transition-transform duration-500 ease-in-out ${isCardFlipped ? 'flipped' : ''}`} style={{ transformStyle: 'preserve-3d' }}>
+                    <div className="absolute inset-0 bg-blue-50 border-2 border-blue-300 dark:bg-blue-950/30 dark:border-blue-700 rounded-xl flex items-center justify-center p-6" style={{ backfaceVisibility: 'hidden' }}>
                       <div className="text-center">
                         <p className="text-xs text-blue-500 mb-2 font-medium">RECTO</p>
                         <p className="text-lg font-medium text-gray-800 dark:text-gray-200">{dueCards[currentCardIndex]?.recto}</p>
                       </div>
-                    ) : (
+                    </div>
+                    <div className="absolute inset-0 bg-violet-50 border-2 border-violet-300 dark:bg-violet-950/30 dark:border-violet-700 rounded-xl flex items-center justify-center p-6" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}>
                       <div className="text-center">
                         <p className="text-xs text-violet-500 mb-2 font-medium">VERSO</p>
                         <p className="text-sm text-gray-700 dark:text-gray-300">{dueCards[currentCardIndex]?.verso}</p>
                       </div>
-                    )}
+                    </div>
                   </div>
-                  <div className="absolute bottom-2 left-0 right-0 text-center">
+                  <div className="absolute bottom-2 left-0 right-0 text-center z-10">
                     <span className="text-xs text-gray-400">{isCardFlipped ? 'Cliquez pour retourner' : 'Cliquez pour révéler'}</span>
                   </div>
                 </div>
                 {isCardFlipped && (
-                  <div className="mt-4 grid grid-cols-4 gap-2">
+                  <div className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-2">
                     <button onClick={() => handleReviewCard(0)} className="py-2.5 px-3 bg-red-100 text-red-700 rounded-xl text-sm font-semibold hover:bg-red-200 transition-all dark:bg-red-950/30 dark:text-red-400">Encore</button>
                     <button onClick={() => handleReviewCard(2)} className="py-2.5 px-3 bg-orange-100 text-orange-700 rounded-xl text-sm font-semibold hover:bg-orange-200 transition-all dark:bg-orange-950/30 dark:text-orange-400">Difficile</button>
                     <button onClick={() => handleReviewCard(4)} className="py-2.5 px-3 bg-green-100 text-green-700 rounded-xl text-sm font-semibold hover:bg-green-200 transition-all dark:bg-green-950/30 dark:text-green-400">Bon</button>

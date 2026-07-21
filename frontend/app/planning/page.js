@@ -77,7 +77,7 @@ function CreateSessionModal({ subjects, selectedDate, onClose, onCreated }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md p-6 animate-scale-in dark:bg-gray-900">
         <div className="flex items-center justify-between mb-5">
           <h3 className="text-lg font-bold text-gray-900 dark:text-white flex items-center gap-2">
@@ -193,17 +193,31 @@ function ProgressTab({ subjects }) {
       </div>
 
       {loading && (
-        <div className="flex items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        <div className="space-y-4">
+          <div className="rounded-3xl p-6 bg-gray-100 dark:bg-gray-800 animate-pulse">
+            <div className="flex items-center gap-6">
+              <div className="w-28 h-28 skeleton rounded-full" />
+              <div className="flex-1 space-y-3">
+                <div className="h-6 w-32 skeleton" />
+                <div className="h-4 w-48 skeleton" />
+                <div className="h-3 w-40 skeleton" />
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-24 skeleton rounded-2xl" />
+            ))}
+          </div>
         </div>
       )}
 
       {progress && !loading && (
         <>
           {/* Score principal */}
-          <div className={`${scoreBg} rounded-3xl p-6 flex items-center gap-6`}>
-            <div className="relative w-28 h-28 shrink-0">
-              <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
+          <div className={`${scoreBg} rounded-3xl p-4 sm:p-6 flex items-center gap-4 sm:gap-6`}>
+            <div className="relative w-20 h-20 sm:w-28 sm:h-28 shrink-0">
+              <svg className="w-20 h-20 sm:w-28 sm:h-28 -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#E5E7EB" className="dark:stroke-gray-700" strokeWidth="10"/>
                 <circle cx="50" cy="50" r="40" fill="none"
                   stroke="url(#scoreGrad2)" strokeWidth="10"
@@ -218,12 +232,12 @@ function ProgressTab({ subjects }) {
                 </defs>
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className={`text-2xl font-black ${scoreText}`}>{score}%</span>
+                <span className={`text-xl sm:text-2xl font-black ${scoreText}`}>{score}%</span>
                 <span className="text-[10px] text-gray-500 dark:text-gray-400 font-semibold mt-0.5">maîtrise</span>
               </div>
             </div>
             <div className="flex-1">
-              <h3 className={`text-xl font-black ${scoreText}`}>{selectedSubject?.nom}</h3>
+              <h3 className={`text-lg sm:text-xl font-black ${scoreText}`}>{selectedSubject?.nom}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
                 {score >= 75 ? 'Excellente maîtrise ! Continuez à maintenir ce niveau.' : score >= 50 ? 'Bonne progression ! Quelques efforts encore pour maîtriser cette matière.' : 'Encore du chemin, mais vous êtes sur la bonne voie !'}
               </p>
@@ -413,12 +427,12 @@ function CalendarTab({ subjects }) {
     : null;
 
   return (
-    <div className="flex gap-6">
+    <div className="flex flex-col lg:flex-row gap-4 lg:gap-6">
       {/* CALENDRIER */}
       <div className="flex-1 min-w-0">
         {/* Navigation mois */}
         <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-blue-600 to-indigo-600">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4 bg-gradient-to-r from-blue-600 to-indigo-600">
             <button onClick={() => {
               if (currentMonth === 0) { setCurrentMonth(11); setCurrentYear(y => y - 1); }
               else setCurrentMonth(m => m - 1);
@@ -454,7 +468,7 @@ function CalendarTab({ subjects }) {
             <div className="grid grid-cols-7">
               {/* Cellules vides avant le 1er */}
               {Array.from({ length: firstDay }).map((_, i) => (
-                <div key={`empty-${i}`} className="min-h-[80px] border-b border-r border-gray-50/50 dark:border-gray-800/50" />
+                <div key={`empty-${i}`} className="min-h-[50px] sm:min-h-[80px] border-b border-r border-gray-50/50 dark:border-gray-800/50" />
               ))}
 
               {/* Jours du mois */}
@@ -469,7 +483,7 @@ function CalendarTab({ subjects }) {
                 return (
                   <div key={day}
                     onClick={() => handleDayClick(day)}
-                    className={`min-h-[80px] p-2 border-b border-r border-gray-50/80 dark:border-gray-800/50 cursor-pointer transition-all duration-150 ${
+                    className={`min-h-[50px] sm:min-h-[80px] p-1.5 sm:p-2 border-b border-r border-gray-50/80 dark:border-gray-800/50 cursor-pointer transition-all duration-150 ${
                       isSelected ? 'bg-blue-50/80 dark:bg-blue-950/30 ring-1 ring-inset ring-blue-300' :
                       isToday ? 'bg-indigo-50/50 dark:bg-indigo-950/30' :
                       isPast ? 'bg-gray-50/30 dark:bg-gray-950' : 'hover:bg-gray-50/60 dark:hover:bg-gray-800/50'
@@ -508,7 +522,7 @@ function CalendarTab({ subjects }) {
       </div>
 
       {/* PANNEAU LATÉRAL — Détail du jour sélectionné */}
-      <div className="w-72 shrink-0">
+      <div className="w-full lg:w-72 lg:shrink-0">
         <div className="bg-white dark:bg-gray-900 rounded-3xl border border-gray-100 dark:border-gray-800 shadow-sm p-5 sticky top-4">
           {selectedDay ? (
             <>
@@ -670,7 +684,7 @@ function AIPlanningTab({ subjects }) {
         </div>
 
         <form onSubmit={handleGenerate} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
             <div>
               <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-1.5">Matière à réviser</label>
               <select value={form.matiereId} onChange={e => setForm(f => ({...f, matiereId: e.target.value}))}
@@ -875,8 +889,24 @@ export default function PlanningPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
+        <div className="hidden lg:block w-64 min-h-screen bg-gray-50 dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 p-4 space-y-3">
+          <div className="h-8 w-32 skeleton" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-10 w-full skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="flex-1 p-4 sm:p-6 lg:p-10">
+          <div className="max-w-7xl mx-auto space-y-6">
+            <div className="h-8 w-48 skeleton" />
+            <div className="flex gap-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-10 w-32 skeleton rounded-xl" />
+              ))}
+            </div>
+            <div className="h-40 w-full skeleton rounded-3xl" />
+          </div>
+        </div>
       </div>
     );
   }
@@ -895,35 +925,35 @@ export default function PlanningPage() {
       <Sidebar activePath="/planning" onLogout={logout} unreadCount={unreadCount} />
       <main className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {/* HEADER */}
-        <div className="px-8 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div className="px-4 sm:px-6 lg:px-8 py-4 sm:py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <BarChart3 className="w-6 h-6 text-blue-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
               Progression & Planning
             </h1>
             <p className="text-gray-500 mt-0.5 dark:text-gray-400">Suivez votre avancement et organisez vos révisions intelligemment.</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <Link href="/notifications" className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </Link>
-            <Link href="/parametres" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-blue-200 dark:shadow-none cursor-pointer hover:opacity-90 transition">
+            <Link href="/parametres" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-xs sm:text-sm shadow-sm shadow-blue-200 dark:shadow-none cursor-pointer hover:opacity-90 transition">
               {firstName[0]?.toUpperCase()}
             </Link>
           </div>
         </div>
 
         {/* ONGLETS */}
-        <div className="px-8 pt-5 pb-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800">
-          <div className="flex gap-1">
+        <div className="px-4 sm:px-6 lg:px-8 pt-4 sm:pt-5 pb-0 bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 overflow-x-auto">
+          <div className="flex gap-1 min-w-max">
             {TABS.map(({ id, label, icon: Icon }) => (
               <button key={id} onClick={() => setActiveTab(id)}
-                className={`flex items-center gap-2 px-5 py-3 rounded-t-xl text-sm font-bold transition-all border-b-2 ${
+                className={`flex items-center gap-1.5 sm:gap-2 px-3 sm:px-5 py-2.5 sm:py-3 rounded-t-xl text-xs sm:text-sm font-bold transition-all border-b-2 whitespace-nowrap ${
                   activeTab === id
                     ? 'text-blue-700 border-blue-600 bg-blue-50/50'
                     : 'text-gray-500 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800'
@@ -939,7 +969,7 @@ export default function PlanningPage() {
         </div>
 
         {/* CONTENU DE L'ONGLET */}
-        <div className="flex-1 px-8 py-7 overflow-y-auto">
+        <div className="flex-1 px-4 sm:px-6 lg:px-8 py-5 sm:py-7 overflow-y-auto">
           {subjects.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-center">
               <GraduationCap className="w-12 h-12 text-gray-200 dark:text-gray-700 mb-4" />

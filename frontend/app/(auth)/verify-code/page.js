@@ -53,7 +53,7 @@ function VerifyCodeContent() {
         <p className="text-gray-500 mb-2">
           Un code à 6 chiffres a été envoyé à :
         </p>
-        <p className="text-sm font-medium text-blue-600 mb-6">{email}</p>
+        <p className="text-sm font-medium text-blue-600 mb-6 break-all">{email}</p>
 
         {error && (
           <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-xl text-red-600 text-sm">
@@ -72,7 +72,7 @@ function VerifyCodeContent() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                 maxLength={6}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition text-center tracking-[10px] font-bold text-lg"
+                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition text-center tracking-[4px] sm:tracking-[6px] md:tracking-[10px] font-bold text-base sm:text-lg overflow-hidden"
                 required
               />
             </div>

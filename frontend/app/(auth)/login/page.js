@@ -38,7 +38,7 @@ export default function LoginPage() {
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row">
 
         {/* PARTIE GAUCHE – FORMULAIRE */}
-        <div className="w-full md:w-7/12 px-8 py-12 md:px-12 lg:px-16">
+        <div className="w-full md:w-7/12 px-5 sm:px-8 py-8 sm:py-12 md:px-10 lg:px-16">
           <div className="flex items-center gap-2 mb-8">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
               <Brain className="w-5 h-5 text-white" strokeWidth={2} />
@@ -46,7 +46,7 @@ export default function LoginPage() {
             <span className="text-xl font-bold text-gray-800">AI Study Assistant</span>
           </div>
 
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">Bienvenue</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1">Bienvenue</h1>
           <p className="text-gray-500 mb-8">Connectez-vous pour continuer votre apprentissage</p>
 
           {error && (
@@ -86,7 +86,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
               <label className="flex items-center gap-2 text-gray-600">
                 <input
                   type="checkbox"
@@ -148,8 +148,8 @@ export default function LoginPage() {
         </div>
 
         {/* PARTIE DROITE – IMAGE PLEINE */}
-        <div className="w-full md:w-5/12 relative">
-          <div className="relative w-full h-full min-h-[300px] md:min-h-[550px]">
+        <div className="hidden md:block w-full md:w-5/12 relative">
+          <div className="relative w-full h-full min-h-[350px] md:min-h-[550px]">
             <Image
               src="/image/Login.png"
               alt="Illustration de connexion"

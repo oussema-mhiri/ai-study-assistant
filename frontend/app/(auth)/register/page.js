@@ -63,7 +63,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-6xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row items-stretch">
 
         {/* PARTIE GAUCHE – FORMULAIRE */}
-        <div className="w-full md:w-7/12 px-8 py-8 md:px-10 lg:px-12 flex flex-col justify-center">
+        <div className="w-full md:w-7/12 px-5 sm:px-8 py-6 sm:py-8 md:px-10 lg:px-12 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-4">
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
               <Brain className="w-4 h-4 text-white" strokeWidth={2} />
@@ -85,17 +85,17 @@ export default function RegisterPage() {
             {field('email', 'Adresse e-mail', Mail, 'email', 'vous@exemple.com')}
             {field('password', 'Mot de passe', Lock, 'password', '••••••••')}
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {field('university', 'Université', School, 'text', '')}
               {field('faculty', 'Faculté', BookOpen, 'text', '')}
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {field('studyLevel', "Niveau", GraduationCap, 'text', '')}
               {field('major', 'Filière', Layers, 'text', '')}
             </div>
 
-            <div className="flex items-start gap-2 text-xs text-gray-600">
+            <div className="flex items-start gap-2 text-xs text-gray-600 min-w-0">
               <input type="checkbox" className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" required />
               <span>
                 J'accepte les <span className="text-blue-600">conditions d'utilisation</span> et la <span className="text-blue-600">politique de confidentialité</span>

@@ -9,7 +9,7 @@ import Sidebar from '@/components/Sidebar';
 import {
   Brain, Search, Plus, Send, Bot, Sparkles, History, Settings,
   Bell, LogOut, Home, Layers, MessageSquare, CalendarDays,
-  ChevronDown, Loader2, User, Clock, BookOpen, Trash2, Paperclip, X, Info
+  ChevronDown, Loader2, User, Clock, BookOpen, Trash2, Paperclip, X, Info, Menu
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -136,6 +136,7 @@ export default function ChatbotPage() {
   const [inputValue, setInputValue] = useState('');
   const [showSubjectSelector, setShowSubjectSelector] = useState(false);
   const [showDocSelector, setShowDocSelector] = useState(false);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
 
   // Notifications
   const [unreadCount, setUnreadCount] = useState(0);
@@ -260,8 +261,18 @@ export default function ChatbotPage() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
+        <div className="hidden lg:block w-64 min-h-screen bg-gray-50 dark:bg-gray-900 border-r border-gray-100 dark:border-gray-800 p-4 space-y-3">
+          <div className="h-8 w-32 skeleton" />
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-12 w-full skeleton rounded-xl" />
+          ))}
+        </div>
+        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6">
+          <div className="w-16 h-16 skeleton rounded-full mb-4" />
+          <div className="h-5 w-48 skeleton mb-2" />
+          <div className="h-4 w-64 skeleton" />
+        </div>
       </div>
     );
   }
@@ -276,24 +287,30 @@ export default function ChatbotPage() {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* HEADER */}
-        <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <MessageSquare className="w-6 h-6 text-blue-600" />
+        <div className="px-4 sm:px-6 py-3 sm:py-4 flex items-center gap-3 shrink-0">
+          <button
+            onClick={() => setShowHistorySidebar(!showHistorySidebar)}
+            className="lg:hidden p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors shrink-0"
+          >
+            <Menu className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+          </button>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <MessageSquare className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
               Assistant IA
             </h1>
-            <p className="text-gray-500 mt-0.5 dark:text-gray-400">Posez vos questions sur vos cours et obtenez des réponses instantanées.</p>
+            <p className="text-gray-500 mt-0.5 dark:text-gray-400 text-xs sm:text-sm truncate">Posez vos questions sur vos cours.</p>
           </div>
-          <div className="flex items-center gap-3">
-            <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
-              <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <Link href="/notifications" className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" />
               {unreadCount > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}
             </Link>
-            <Link href="/parametres" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-blue-200 cursor-pointer hover:opacity-90 transition">
+            <Link href="/parametres" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-sm shadow-blue-200 cursor-pointer hover:opacity-90 transition">
               {firstName[0]?.toUpperCase()}
             </Link>
           </div>
@@ -301,23 +318,45 @@ export default function ChatbotPage() {
 
         {/* ZONE PRINCIPALE DE DISCUSSION */}
         <div className="flex-1 flex overflow-hidden">
-          
+
+          {/* OVERLAY MOBILE pour sidebar conversations */}
+          {showHistorySidebar && (
+            <div
+              className="fixed inset-0 bg-black/40 backdrop-blur-sm z-30 lg:hidden animate-fade-in"
+              onClick={() => setShowHistorySidebar(false)}
+            />
+          )}
+
           {/* BARRE LATÉRALE HISTORIQUE DES CONVERSATIONS */}
-          <div className="w-76 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col h-full shrink-0 shadow-sm z-10">
-            <div className="p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
-              <span className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Sessions de chat</span>
-              {selectedSubject && (
+          <div className={`
+            fixed lg:relative top-0 left-0 h-screen lg:h-full z-40 lg:z-10
+            w-72 lg:w-64 xl:w-76 shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700
+            flex flex-col shadow-sm
+            transition-transform duration-300 ease-out
+            ${showHistorySidebar ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          `}>
+            <div className="p-3 sm:p-4 border-b border-gray-100 dark:border-gray-800 flex justify-between items-center shrink-0">
+              <span className="text-[10px] sm:text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider">Sessions</span>
+              <div className="flex items-center gap-1.5">
+                {selectedSubject && (
+                  <button
+                    onClick={handleNewConversation}
+                    className="flex items-center gap-1 px-2.5 py-1.5 sm:px-3 sm:py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-[10px] sm:text-xs font-semibold transition-all shadow-md shadow-blue-100 cursor-pointer"
+                  >
+                    <Plus className="w-3 h-3" />
+                    Nouveau
+                  </button>
+                )}
                 <button
-                  onClick={handleNewConversation}
-                  className="flex items-center gap-1.5 px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold transition-all shadow-md shadow-blue-100 cursor-pointer"
+                  onClick={() => setShowHistorySidebar(false)}
+                  className="lg:hidden p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
                 >
-                  <Plus className="w-3.5 h-3.5" />
-                  Nouveau
+                  <X className="w-4 h-4 text-gray-500" />
                 </button>
-              )}
+              </div>
             </div>
-            
-            <div className="flex-1 overflow-y-auto p-3 space-y-1.5">
+
+            <div className="flex-1 overflow-y-auto p-2 sm:p-3 space-y-1.5">
               {loadingConversations ? (
                 <div className="flex justify-center py-8">
                   <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
@@ -326,7 +365,7 @@ export default function ChatbotPage() {
                 <div className="text-center py-16 px-4">
                   <MessageSquare className="w-8 h-8 text-gray-300 dark:text-gray-600 mx-auto mb-3" />
                   <p className="text-xs text-gray-400 dark:text-gray-500 leading-relaxed font-semibold">Aucune discussion active.</p>
-                  <p className="text-[10px] text-gray-400/80 dark:text-gray-500/80 leading-relaxed mt-1">Créez une session pour démarrer l'apprentissage.</p>
+                  <p className="text-[10px] text-gray-400/80 dark:text-gray-500/80 leading-relaxed mt-1">Créez une session pour démarrer.</p>
                 </div>
               ) : (
                 conversations.map((conv) => {
@@ -334,18 +373,18 @@ export default function ChatbotPage() {
                   return (
                     <div
                       key={conv.id}
-                      className={`group flex items-center justify-between p-3 rounded-2xl text-xs transition-all border cursor-pointer ${
+                      className={`group flex items-center justify-between p-2.5 sm:p-3 rounded-2xl text-xs transition-all border cursor-pointer ${
                         isActive
                           ? 'bg-gradient-to-r from-blue-50/60 to-indigo-50/20 text-blue-700 font-bold border-blue-100 shadow-sm'
                           : 'text-gray-600 dark:text-gray-400 border-transparent hover:bg-gray-50/80 dark:hover:bg-gray-800 hover:text-gray-900 dark:hover:text-white'
                       }`}
-                      onClick={() => selectConversation(conv)}
+                      onClick={() => { selectConversation(conv); setShowHistorySidebar(false); }}
                     >
                       <div className="flex-1 min-w-0 pr-2">
                         <div className="truncate text-gray-800 dark:text-gray-200 font-semibold">{conv.titre}</div>
                         {conv.document_nom && (
                           <div className="text-[10px] text-zinc-400 dark:text-zinc-500 font-medium truncate mt-1 flex items-center gap-1">
-                            <BookOpen className="w-2.5 h-2.5 text-zinc-400 dark:text-zinc-500" />
+                            <BookOpen className="w-2.5 h-2.5 text-zinc-400 dark:text-zinc-500 shrink-0" />
                             {conv.document_nom}
                           </div>
                         )}
@@ -358,7 +397,7 @@ export default function ChatbotPage() {
                           }
                         }}
                         className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                        title="Supprimer la conversation"
+                        title="Supprimer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>
@@ -373,7 +412,7 @@ export default function ChatbotPage() {
           <div className="flex-1 flex flex-col bg-gray-50/30 dark:bg-gray-950 h-full overflow-hidden">
             
             {/* SÉLECTEURS DE CONTEXTE MATIÈRE ET DOCUMENT */}
-            <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-6 py-3.5 flex items-center gap-3 shrink-0 shadow-sm z-10 flex-wrap">
+            <div className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 px-3 sm:px-6 py-3 flex items-center gap-2 sm:gap-3 shrink-0 shadow-sm z-10 flex-wrap">
               {/* Sélecteur de matière */}
               <div className="relative">
                 <button
@@ -381,15 +420,15 @@ export default function ChatbotPage() {
                     setShowSubjectSelector(!showSubjectSelector);
                     setShowDocSelector(false);
                   }}
-                  className="flex items-center gap-2 px-4 py-2.5 bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 rounded-xl text-xs font-bold transition-all border border-blue-100/30 shadow-sm cursor-pointer"
+                  className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-blue-50/80 hover:bg-blue-100/80 text-blue-700 rounded-xl text-[10px] sm:text-xs font-bold transition-all border border-blue-100/30 shadow-sm cursor-pointer"
                 >
-                  <Layers className="w-4 h-4" />
-                  {selectedSubject?.nom || 'Sélectionner une matière'}
-                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showSubjectSelector ? 'rotate-180' : ''}`} />
+                  <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                  <span className="truncate max-w-[120px] sm:max-w-none">{selectedSubject?.nom || 'Matière'}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 shrink-0 ${showSubjectSelector ? 'rotate-180' : ''}`} />
                 </button>
 
                 {showSubjectSelector && subjects.length > 0 && (
-                  <div className="absolute left-0 mt-2 w-64 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1.5 z-20">
+                  <div className="absolute left-0 mt-2 w-56 sm:w-64 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1.5 z-20 max-h-60 overflow-y-auto">
                     {subjects.map((s) => (
                       <button
                         key={s.id}
@@ -413,17 +452,17 @@ export default function ChatbotPage() {
                       setShowDocSelector(!showDocSelector);
                       setShowSubjectSelector(false);
                     }}
-                    className="flex items-center gap-2 px-4 py-2.5 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100/70 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-xs font-bold transition-all border border-zinc-200/50 dark:border-zinc-700/50 shadow-sm cursor-pointer"
+                    className="flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-zinc-50 dark:bg-zinc-800 hover:bg-zinc-100/70 dark:hover:bg-zinc-700 text-zinc-700 dark:text-zinc-300 rounded-xl text-[10px] sm:text-xs font-bold transition-all border border-zinc-200/50 dark:border-zinc-700/50 shadow-sm cursor-pointer"
                   >
-                    <BookOpen className="w-4 h-4 text-zinc-500 dark:text-zinc-400" />
-                    <span className="max-w-[180px] truncate">
-                      {selectedDoc ? selectedDoc.nom_fichier : 'Tous les documents'}
+                    <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-zinc-500 dark:text-zinc-400 shrink-0" />
+                    <span className="max-w-[100px] sm:max-w-[180px] truncate">
+                      {selectedDoc ? selectedDoc.nom_fichier : 'Documents'}
                     </span>
-                    <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${showDocSelector ? 'rotate-180' : ''}`} />
+                    <ChevronDown className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-transform duration-200 shrink-0 ${showDocSelector ? 'rotate-180' : ''}`} />
                   </button>
 
                   {showDocSelector && (
-                    <div className="absolute left-0 mt-2 w-72 bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1.5 z-20 max-h-60 overflow-y-auto">
+                    <div className="absolute left-0 mt-2 w-64 sm:w-72 max-w-[calc(100vw-2rem)] bg-white dark:bg-gray-900 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 py-1.5 z-20 max-h-60 overflow-y-auto">
                       <button
                         onClick={() => handleDocChange(null)}
                         className={`w-full text-left px-4 py-2.5 text-xs font-semibold hover:bg-zinc-50 dark:hover:bg-zinc-800 transition-all ${
@@ -451,7 +490,7 @@ export default function ChatbotPage() {
 
             {/* BANNER D'INFORMATION DE CONTEXTE DU CHAT */}
             {activeConversation && (
-              <div className="bg-blue-50/50 px-6 py-2 flex items-center gap-2 shrink-0 border-b border-blue-100/20 text-xs text-blue-800 font-medium select-none">
+              <div className="bg-blue-50/50 px-3 sm:px-6 py-2 flex items-center gap-2 shrink-0 border-b border-blue-100/20 text-[10px] sm:text-xs text-blue-800 font-medium select-none">
                 <Info className="w-4 h-4 text-blue-500 shrink-0" />
                 {activeConversation.document_nom ? (
                   <span>
@@ -466,7 +505,7 @@ export default function ChatbotPage() {
             )}
 
             {/* MESSAGE CONTAINER */}
-            <div className="flex-1 overflow-y-auto px-6 py-6 space-y-2 bg-gray-50/30 dark:bg-gray-950">
+            <div className="flex-1 overflow-y-auto px-3 sm:px-6 py-4 sm:py-6 space-y-2 bg-gray-50/30 dark:bg-gray-950">
               {loadingMessages ? (
                 <div className="flex flex-col items-center justify-center h-full">
                   <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
@@ -520,7 +559,7 @@ export default function ChatbotPage() {
 
             {/* SUGGESTIONS INTELLIGENTES */}
             {messages.length === 0 && !streamingMessage && suggestions.length > 0 && (
-              <div className="px-6 py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0 shadow-inner">
+              <div className="px-3 sm:px-6 py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0 shadow-inner">
                 <div className="max-w-4xl mx-auto">
                   <div className="flex items-center gap-1.5 mb-3 text-xs font-bold text-gray-400 dark:text-gray-500 uppercase tracking-wider select-none">
                     <Sparkles className="w-3.5 h-3.5 text-blue-500 animate-pulse" />
@@ -541,7 +580,7 @@ export default function ChatbotPage() {
             )}
 
             {/* SAISIE DE TEXTE */}
-            <div className="px-6 py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0">
+            <div className="px-3 sm:px-6 py-3 sm:py-4 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shrink-0">
               <div className="max-w-4xl mx-auto">
                 
                 {/* Aperçu de l'image sélectionnée */}

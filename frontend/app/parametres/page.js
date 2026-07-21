@@ -220,18 +220,18 @@ export default function ParametresPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       <Sidebar activePath="/parametres" onLogout={logout} />
 
-      <main className="flex-1 p-6 lg:p-10">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10">
         <div className="max-w-4xl mx-auto">
           {/* HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Settings className="w-6 h-6 text-blue-600" strokeWidth={1.8} />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Settings className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" strokeWidth={1.8} />
                 Paramètres du compte
               </h1>
               <p className="text-gray-500 dark:text-gray-400 mt-0.5">Gérez votre profil et vos préférences.</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-md shadow-blue-200">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-xs sm:text-sm shadow-md shadow-blue-200">
               {firstName[0]?.toUpperCase()}
             </div>
           </div>

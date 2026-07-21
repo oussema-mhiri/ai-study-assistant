@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,6 +14,62 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart,
 } from 'recharts';
 
+function AnimatedCounter({ value, duration = 800 }) {
+  const [display, setDisplay] = useState(0);
+  const ref = useRef(null);
+  const started = useRef(false);
+
+  useEffect(() => {
+    const num = typeof value === 'number' ? value : parseInt(value) || 0;
+    if (num === 0 || started.current) { setDisplay(num); return; }
+    started.current = true;
+    const start = performance.now();
+    const animate = (now) => {
+      const elapsed = now - start;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * num));
+      if (progress < 1) ref.current = requestAnimationFrame(animate);
+    };
+    ref.current = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(ref.current);
+  }, [value, duration]);
+
+  return <span>{display}</span>;
+}
+
+function SkeletonCard() {
+  return (
+    <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm dark:bg-gray-900 dark:border-gray-800">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="h-4 w-20 skeleton" />
+          <div className="h-8 w-16 skeleton mt-2" />
+          <div className="h-3 w-24 skeleton mt-2" />
+        </div>
+        <div className="w-11 h-11 skeleton rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function SkeletonSection({ rows = 3 }) {
+  return (
+    <div className="space-y-3">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+          <div className="w-2 h-2 rounded-full skeleton flex-shrink-0" />
+          <div className="flex-1">
+            <div className="h-4 w-3/4 skeleton" />
+            <div className="h-3 w-1/2 skeleton mt-1.5" />
+          </div>
+          <div className="h-3 w-12 skeleton" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function StatCard({ title, value, icon: Icon, trend, loading, color = 'blue' }) {
   const colorMap = {
     blue: 'bg-blue-50 dark:bg-blue-950/30 text-blue-600',
@@ -27,9 +83,9 @@ function StatCard({ title, value, icon: Icon, trend, loading, color = 'blue' }) 
         <div>
           <p className="text-sm text-gray-500 font-medium dark:text-gray-400">{title}</p>
           {loading ? (
-            <div className="h-8 w-16 bg-gray-100 rounded animate-pulse mt-1 dark:bg-gray-800" />
+            <div className="h-8 w-16 skeleton mt-1" />
           ) : (
-            <p className="text-3xl font-bold text-gray-900 mt-1 dark:text-white">{value}</p>
+            <p className="text-3xl font-bold text-gray-900 mt-1 dark:text-white animate-count-up"><AnimatedCounter value={value} /></p>
           )}
           {!loading && trend && <p className="text-xs text-gray-400 mt-1 dark:text-gray-500">{trend}</p>}
         </div>
@@ -104,7 +160,7 @@ function ScoreChart({ data }) {
   }
   return (
     <ResponsiveContainer width="100%" height={200}>
-      <AreaChart data={data} margin={{ top: 5, right: 10, left: -15, bottom: 0 }}>
+      <AreaChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
         <defs>
           <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3} />
@@ -204,28 +260,28 @@ export default function DashboardPage() {
     <div className="min-h-screen bg-white flex dark:bg-gray-950">
       <Sidebar activePath="/dashboard" onLogout={logout} />
 
-      <main className="flex-1 p-6 lg:p-8 max-w-7xl mx-auto">
+      <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-              <Home className="w-6 h-6 text-blue-600" />
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <Home className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
               Bonjour, {firstName}
             </h1>
-            <p className="text-gray-500 mt-0.5 dark:text-gray-400">
-              Centralisez votre apprentissage, organisez vos cours et boostez vos résultats avec l'IA.
+            <p className="text-gray-500 mt-0.5 dark:text-gray-400 text-xs sm:text-sm">
+              Centralisez votre apprentissage et boostez vos résultats.
             </p>
           </div>
-          <div className="flex items-center gap-4">
-            <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition dark:hover:bg-gray-800">
-              <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <div className="flex items-center gap-3 sm:gap-4">
+            <Link href="/notifications" className="relative w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition dark:hover:bg-gray-800">
+              <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" />
               {data && data.unreadNotifications > 0 && (
                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
                   {data.unreadNotifications}
                 </span>
               )}
             </Link>
-            <Link href="/parametres" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white shadow-sm cursor-pointer hover:opacity-90 transition">
+            <Link href="/parametres" className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs sm:text-sm font-semibold text-white shadow-sm cursor-pointer hover:opacity-90 transition">
               {firstName[0]?.toUpperCase()}
             </Link>
           </div>
@@ -260,8 +316,13 @@ export default function DashboardPage() {
               </Link>
             </div>
             {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
+              <div className="flex flex-wrap justify-center gap-6">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex flex-col items-center gap-2">
+                    <div className="w-[84px] h-[84px] skeleton rounded-full" />
+                    <div className="h-3 w-12 skeleton" />
+                  </div>
+                ))}
               </div>
             ) : matieres.length === 0 ? (
               <div className="text-center py-10">
@@ -286,9 +347,7 @@ export default function DashboardPage() {
               <span className="text-xs text-gray-400 dark:text-gray-500">14 derniers jours</span>
             </div>
             {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-              </div>
+              <div className="h-[200px] skeleton rounded-xl" />
             ) : (
               <ScoreChart data={scoreHistory} />
             )}
@@ -308,9 +367,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-              </div>
+              <SkeletonSection rows={3} />
             ) : sessions.length === 0 ? (
               <div className="text-center py-10">
                 <CalendarDays className="w-8 h-8 text-gray-300 mx-auto mb-2 dark:text-gray-600" />
@@ -346,9 +403,7 @@ export default function DashboardPage() {
               </p>
             </div>
             {loading ? (
-              <div className="flex items-center justify-center py-10">
-                <Loader2 className="w-6 h-6 text-blue-600 animate-spin" />
-              </div>
+              <SkeletonSection rows={3} />
             ) : quizzes.length === 0 ? (
               <div className="text-center py-10">
                 <Target className="w-8 h-8 text-gray-300 mx-auto mb-2 dark:text-gray-600" />
@@ -419,7 +474,7 @@ export default function DashboardPage() {
         )}
 
         {/* Footer */}
-        <div className="flex items-center gap-2 text-xs text-gray-400 border-t border-gray-100 pt-4 dark:text-gray-500 dark:border-gray-800">
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 border-t border-gray-100 pt-4 dark:text-gray-500 dark:border-gray-800">
           <Sparkles className="w-3 h-3 text-blue-500" />
           <span>Continuez votre progression !</span>
           <span className="text-blue-600 font-medium">{allMatieres.length} matiere{allMatieres.length > 1 ? 's' : ''}</span>

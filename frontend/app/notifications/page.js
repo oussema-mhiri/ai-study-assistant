@@ -211,13 +211,13 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-950 flex">
       <Sidebar activePath="/notifications" onLogout={logout} />
 
-      <main className="flex-1 p-6 lg:p-10">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10">
         <div className="max-w-4xl mx-auto">
           {/* HEADER */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-                <Bell className="w-6 h-6 text-blue-600" />
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+                <Bell className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 shrink-0" />
                 Centre de notifications
               </h1>
               <p className="text-gray-500 dark:text-gray-400 mt-0.5">Gérez vos alertes, rappels et notifications.</p>
