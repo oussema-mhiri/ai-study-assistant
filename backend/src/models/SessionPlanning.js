@@ -68,12 +68,13 @@ const SessionPlanning = {
   // Sessions du lendemain pour le cron (rappels)
   findTomorrow: async () => {
     const query = `
-      SELECT sp.*, u.email, u.full_name, m.nom AS matiere_nom
+      SELECT sp.*, u.email, u.full_name, u.notif_push, u.notif_hour, m.nom AS matiere_nom
       FROM sessions_planning sp
       JOIN users u ON u.id = sp.user_id
       JOIN matieres m ON m.id = sp.matiere_id
       WHERE sp.date_session = CURRENT_DATE + INTERVAL '1 day'
         AND sp.statut = 'planifie'
+        AND u.notif_push = true
     `;
     const result = await pool.query(query);
     return result.rows;

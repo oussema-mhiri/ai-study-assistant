@@ -24,7 +24,7 @@ const User = {
   // Trouver un utilisateur par ID
   findById: async (id) => {
     const query = `
-      SELECT id, full_name, email, university, faculty, study_level, major, ia_level, response_mode, created_at 
+      SELECT id, full_name, email, university, faculty, study_level, major, ia_level, response_mode, notif_push, notif_email, notif_hour, created_at 
       FROM users WHERE id = $1
     `;
     const result = await pool.query(query, [id]);
@@ -140,6 +140,21 @@ const User = {
       RETURNING id, full_name, email, university, faculty, study_level, major, ia_level, response_mode, created_at
     `;
     const result = await pool.query(query, [iaLevel, responseMode, userId]);
+    return result.rows[0];
+  },
+
+  // Mettre à jour les préférences de notification
+  updateNotifPreferences: async (userId, { notifPush, notifEmail, notifHour }) => {
+    const query = `
+      UPDATE users 
+      SET notif_push = COALESCE($1, notif_push),
+          notif_email = COALESCE($2, notif_email),
+          notif_hour = COALESCE($3, notif_hour),
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $4
+      RETURNING id, full_name, email, notif_push, notif_email, notif_hour
+    `;
+    const result = await pool.query(query, [notifPush, notifEmail, notifHour, userId]);
     return result.rows[0];
   },
 };

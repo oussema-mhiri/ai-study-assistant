@@ -73,7 +73,7 @@ const deleteSession = async (req, res) => {
   }
 };
 
-// POST /planning/generate — Génération IA du planning
+// POST /planning/generate — Génération IA du planning avec auto-save
 const generateAIPlanning = async (req, res) => {
   try {
     const userId = req.userId;
@@ -91,7 +91,7 @@ const generateAIPlanning = async (req, res) => {
     const daysRemaining = Math.ceil((exam - today) / (1000 * 60 * 60 * 24));
     const disponibilitesH = Math.round((disponibilitesMinutesParJour || 60) / 60 * 10) / 10;
 
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.1-flash-lite' });
     const prompt = `
       Tu es un expert en pédagogie. Génère un planning de révision structuré pour un étudiant.
       
@@ -121,13 +121,36 @@ const generateAIPlanning = async (req, res) => {
     const result = await model.generateContent(prompt);
     const text = result.response.text().trim();
 
-    // Parse JSON (robuste)
     const jsonMatch = text.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return res.status(500).json({ error: 'Impossible de générer le planning IA' });
     }
     const planning = JSON.parse(jsonMatch[0]);
-    res.json({ planning, matiereNom: matiere.nom });
+
+    // Auto-save les sessions
+    const savedSessions = [];
+    for (const s of (planning.sessions || [])) {
+      try {
+        const session = await SessionPlanning.create(
+          userId, matiereId, s.date, s.type, s.titre, s.duree_minutes, null
+        );
+        savedSessions.push(session);
+      } catch (e) {
+        console.error('Erreur sauvegarde session IA:', e);
+      }
+    }
+
+    // Une seule notification globale
+    if (savedSessions.length > 0) {
+      await Notification.create(
+        userId,
+        '📅 Planning IA généré',
+        `${savedSessions.length} sessions de révision pour "${matiere.nom}" ont été ajoutées à votre planning.`,
+        'planning'
+      );
+    }
+
+    res.json({ planning: { ...planning, sessions: savedSessions }, matiereNom: matiere.nom });
   } catch (err) {
     console.error('Erreur generateAIPlanning:', err);
     res.status(500).json({ error: 'Erreur lors de la génération du planning' });

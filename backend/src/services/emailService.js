@@ -94,3 +94,27 @@ exports.sendResetCodeEmail = async (toEmail, code) => {
     throw error;
   }
 };
+
+// Email générique (pour cron, rappels, etc.)
+exports.sendEmail = async ({ to, subject, html }) => {
+  try {
+    const transporter = await getTransporter();
+    const info = await transporter.sendMail({
+      from: `"AI Study Assistant" <${isEthereal ? cachedAccount.user : process.env.EMAIL_USER}>`,
+      to,
+      subject,
+      html,
+    });
+
+    if (isEthereal) {
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      console.log(`📬 Rappel email visualisable : ${previewUrl}`);
+    }
+
+    console.log(`✅ Email envoyé à ${to} : ${info.messageId}`);
+    return info;
+  } catch (error) {
+    console.error('❌ Erreur sendEmail:', error);
+    throw error;
+  }
+};

@@ -98,7 +98,7 @@ export default function RegisterPage() {
             <div className="flex items-start gap-2 text-xs text-gray-600">
               <input type="checkbox" className="w-3.5 h-3.5 mt-0.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500" required />
               <span>
-                J'accepte les <Link href="#" className="text-blue-600 hover:underline">conditions</Link> et la <Link href="#" className="text-blue-600 hover:underline">politique de confidentialité</Link>
+                J'accepte les <span className="text-blue-600">conditions d'utilisation</span> et la <span className="text-blue-600">politique de confidentialité</span>
               </span>
             </div>
 

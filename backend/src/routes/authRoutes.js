@@ -7,7 +7,9 @@ const {
   verifyResetCode,
   resetPassword,
   updateProfile,
-  updatePreferences
+  updatePreferences,
+  updateNotifPreferences,
+  changePassword
 } = require('../controllers/authController');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
@@ -37,5 +39,7 @@ router.get('/me', auth, async (req, res) => {
 
 router.put('/profile', auth, updateProfile);
 router.put('/preferences', auth, updatePreferences);
+router.put('/notif-preferences', auth, updateNotifPreferences);
+router.put('/password', auth, changePassword);
 
 module.exports = router;

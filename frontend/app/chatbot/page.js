@@ -137,6 +137,9 @@ export default function ChatbotPage() {
   const [showSubjectSelector, setShowSubjectSelector] = useState(false);
   const [showDocSelector, setShowDocSelector] = useState(false);
 
+  // Notifications
+  const [unreadCount, setUnreadCount] = useState(0);
+
   // Gestion des images
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -174,6 +177,13 @@ export default function ChatbotPage() {
   useEffect(() => {
     if (user) {
       fetchSubjects();
+      const fetchUnread = async () => {
+        try {
+          const res = await api.get('/planning/notifications');
+          setUnreadCount(res.data.unread || 0);
+        } catch (err) { /* silent */ }
+      };
+      fetchUnread();
     }
   }, [user]);
 
@@ -266,15 +276,23 @@ export default function ChatbotPage() {
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden">
         {/* HEADER */}
-        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-6 py-4 flex items-center justify-between shrink-0 shadow-sm z-10">
+        <div className="px-6 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4 shrink-0">
           <div>
-            <h1 className="text-xl font-bold text-gray-900 dark:text-white">Assistant IA</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400">Posez vos questions sur vos cours et obtenez des réponses instantanées.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <MessageSquare className="w-6 h-6 text-blue-600" />
+              Assistant IA
+            </h1>
+            <p className="text-gray-500 mt-0.5 dark:text-gray-400">Posez vos questions sur vos cours et obtenez des réponses instantanées.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            </button>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-blue-200">
               {firstName[0]?.toUpperCase()}
             </div>

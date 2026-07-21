@@ -13,6 +13,7 @@ import {
   AlertCircle, Info, X, Send, Check, RotateCcw, Bot
 } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 // ============================================
 // UTILITAIRES CALENDRIER
@@ -166,6 +167,11 @@ function ProgressTab({ subjects }) {
   const scoreBg = score >= 75 ? 'bg-emerald-50 dark:bg-emerald-950/30' : score >= 50 ? 'bg-blue-50 dark:bg-blue-950/30' : 'bg-amber-50 dark:bg-amber-950/30';
   const scoreText = score >= 75 ? 'text-emerald-700' : score >= 50 ? 'text-blue-700' : 'text-amber-700';
 
+  const chartData = (progress?.score_history || []).map((h, i) => ({
+    name: i + 1,
+    score: h.score,
+  }));
+
   return (
     <div className="space-y-6">
       {/* Sélecteur matière */}
@@ -196,12 +202,12 @@ function ProgressTab({ subjects }) {
               <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="40" fill="none" stroke="#E5E7EB" className="dark:stroke-gray-700" strokeWidth="10"/>
                 <circle cx="50" cy="50" r="40" fill="none"
-                  stroke="url(#scoreGrad)" strokeWidth="10"
+                  stroke="url(#scoreGrad2)" strokeWidth="10"
                   strokeLinecap="round"
                   strokeDasharray={`${2 * Math.PI * 40 * score / 100} ${2 * Math.PI * 40 * (1 - score / 100)}`}
                 />
                 <defs>
-                  <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <linearGradient id="scoreGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
                     <stop offset="0%" stopColor={score >= 75 ? '#10B981' : score >= 50 ? '#3B82F6' : '#F59E0B'} />
                     <stop offset="100%" stopColor={score >= 75 ? '#14B8A6' : score >= 50 ? '#6366F1' : '#EF4444'} />
                   </linearGradient>
@@ -215,7 +221,7 @@ function ProgressTab({ subjects }) {
             <div className="flex-1">
               <h3 className={`text-xl font-black ${scoreText}`}>{selectedSubject?.nom}</h3>
               <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 leading-relaxed">
-                {score >= 75 ? '🎉 Excellente maîtrise ! Continuez à maintenir ce niveau.' : score >= 50 ? '📈 Bonne progression ! Quelques efforts encore pour maîtriser cette matière.' : '💪 Encore du chemin, mais vous êtes sur la bonne voie !'}
+                {score >= 75 ? 'Excellente maîtrise ! Continuez à maintenir ce niveau.' : score >= 50 ? 'Bonne progression ! Quelques efforts encore pour maîtriser cette matière.' : 'Encore du chemin, mais vous êtes sur la bonne voie !'}
               </p>
               {progress.matiere?.date_examen && (
                 <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
@@ -233,12 +239,14 @@ function ProgressTab({ subjects }) {
           </div>
 
           {/* Cartes stats */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {[
               { icon: FileText, label: 'Documents', value: progress.documents?.total, sub: 'importés', color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30', border: 'border-blue-100 dark:border-blue-800/30' },
               { icon: BookOpen, label: 'Quiz', value: progress.quizs?.total, sub: `${progress.quizs?.total_questions} questions`, color: 'text-violet-600', bg: 'bg-violet-50 dark:bg-violet-950/30', border: 'border-violet-100 dark:border-violet-800/30' },
               { icon: Target, label: 'Réussite QCM', value: `${progress.quiz_results?.taux_reussite || 0}%`, sub: `${progress.quiz_results?.correctes}/${progress.quiz_results?.total_reponses}`, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30', border: 'border-emerald-100 dark:border-emerald-800/30' },
-              { icon: MessageSquare, label: 'Sessions Chat', value: progress.chatbot?.conversations, sub: `${progress.chatbot?.messages} messages`, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-100 dark:border-amber-800/30' },
+              { icon: Zap, label: 'Exercices', value: progress.exercises?.total || 0, sub: `${progress.exercises?.correctes || 0} justes`, color: 'text-amber-600', bg: 'bg-amber-50 dark:bg-amber-950/30', border: 'border-amber-100 dark:border-amber-800/30' },
+              { icon: Brain, label: 'Flashcards', value: progress.flashcards?.total || 0, sub: `${progress.flashcards?.reviews || 0} révisions`, color: 'text-pink-600', bg: 'bg-pink-50 dark:bg-pink-950/30', border: 'border-pink-100 dark:border-pink-800/30' },
+              { icon: MessageSquare, label: 'Sessions Chat', value: progress.chatbot?.conversations, sub: `${progress.chatbot?.messages} messages`, color: 'text-indigo-600', bg: 'bg-indigo-50 dark:bg-indigo-950/30', border: 'border-indigo-100 dark:border-indigo-800/30' },
             ].map(({ icon: Icon, label, value, sub, color, bg, border }) => (
               <div key={label} className={`${bg} border ${border} rounded-2xl p-4 flex flex-col gap-2`}>
                 <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
@@ -253,6 +261,37 @@ function ProgressTab({ subjects }) {
             ))}
           </div>
 
+          {/* Graphique évolution score */}
+          {chartData.length > 1 && (
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
+              <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-blue-600" />
+                Évolution du score QCM
+              </h4>
+              <div className="h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData}>
+                    <defs>
+                      <linearGradient id="colorScore" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#3B82F6" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                    <YAxis domain={[0, 100]} tick={{ fontSize: 10, fill: '#9CA3AF' }} />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)', fontSize: '12px' }}
+                      formatter={(value) => [`${value}%`, 'Score']}
+                      labelFormatter={(label) => `Quiz #${label}`}
+                    />
+                    <Area type="monotone" dataKey="score" stroke="#3B82F6" strokeWidth={2} fillOpacity={1} fill="url(#colorScore)" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
           {/* Barres de progression par catégorie */}
           <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-3xl p-6 shadow-sm">
             <h4 className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-5 flex items-center gap-2">
@@ -263,6 +302,8 @@ function ProgressTab({ subjects }) {
               {[
                 { label: 'Documents couverts', pct: Math.min(progress.documents?.total * 12.5, 100), color: 'from-blue-500 to-blue-400' },
                 { label: 'Taux de réussite QCM', pct: progress.quiz_results?.taux_reussite || 0, color: 'from-violet-500 to-indigo-400' },
+                { label: 'Exercices réussis', pct: progress.exercises?.total > 0 ? Math.round(progress.exercises.correctes / progress.exercises.total * 100) : 0, color: 'from-amber-500 to-orange-400' },
+                { label: 'Efficacité flashcards', pct: progress.flashcards?.avg_efficacite || 0, color: 'from-pink-500 to-rose-400' },
                 { label: 'Engagement chatbot', pct: Math.min(progress.chatbot?.conversations * 10, 100), color: 'from-emerald-500 to-teal-400' },
               ].map(({ label, pct, color }) => (
                 <div key={label}>
@@ -551,8 +592,6 @@ function AIPlanningTab({ subjects }) {
   });
   const [loading, setLoading] = useState(false);
   const [aiPlanning, setAiPlanning] = useState(null);
-  const [savingIds, setSavingIds] = useState(new Set());
-  const [savedIds, setSavedIds] = useState(new Set());
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -562,40 +601,11 @@ function AIPlanningTab({ subjects }) {
     try {
       const res = await api.post('/planning/generate', form);
       setAiPlanning(res.data);
-      toast.success('Planning généré par l\'IA ! 🤖');
+      toast.success('Planning généré et ajouté à votre calendrier ! 🤖');
     } catch (err) {
       toast.error('Erreur lors de la génération');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSaveSession = async (session, idx) => {
-    setSavingIds(prev => new Set([...prev, idx]));
-    try {
-      await api.post('/planning/sessions', {
-        matiereId: form.matiereId,
-        dateSession: session.date,
-        type: session.type,
-        titre: session.titre,
-        dureeMinutes: session.duree_minutes,
-      });
-      setSavedIds(prev => new Set([...prev, idx]));
-      toast.success('Session ajoutée au calendrier !');
-    } catch {
-      toast.error('Erreur lors de l\'ajout');
-    } finally {
-      setSavingIds(prev => { const s = new Set(prev); s.delete(idx); return s; });
-    }
-  };
-
-  const handleSaveAll = async () => {
-    if (!aiPlanning?.planning?.sessions) return;
-    for (let i = 0; i < aiPlanning.planning.sessions.length; i++) {
-      if (!savedIds.has(i)) {
-        await handleSaveSession(aiPlanning.planning.sessions[i], i);
-        await new Promise(r => setTimeout(r, 200));
-      }
     }
   };
 
@@ -656,16 +666,10 @@ function AIPlanningTab({ subjects }) {
               <GraduationCap className="w-4 h-4 text-indigo-600" />
               Planning pour {aiPlanning.matiereNom}
             </h3>
-            <div className="flex gap-2">
-              <button onClick={() => { setAiPlanning(null); setSavedIds(new Set()); }}
-                className="px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all flex items-center gap-1">
-                <RotateCcw className="w-3 h-3" /> Régénérer
-              </button>
-              <button onClick={handleSaveAll}
-                className="px-3 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-indigo-600 to-blue-600 rounded-xl shadow-sm hover:shadow-md transition-all flex items-center gap-1">
-                <CheckCircle className="w-3 h-3" /> Tout ajouter
-              </button>
-            </div>
+            <button onClick={() => setAiPlanning(null)}
+              className="px-3 py-1.5 text-xs font-semibold text-gray-600 dark:text-gray-400 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-xl transition-all flex items-center gap-1">
+              <RotateCcw className="w-3 h-3" /> Régénérer
+            </button>
           </div>
 
           {/* Conseil IA */}
@@ -679,30 +683,34 @@ function AIPlanningTab({ subjects }) {
           <div className="space-y-2 max-h-96 overflow-y-auto pr-1">
             {aiPlanning.planning?.sessions?.map((s, idx) => {
               const cfg = TYPE_CONFIG[s.type] || TYPE_CONFIG.revision;
-              const isSaved = savedIds.has(idx);
-              const isSaving = savingIds.has(idx);
+              const sessionDate = s.date_session || s.date;
               return (
-                <div key={idx} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all ${isSaved ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-100 dark:border-emerald-800/30 opacity-70' : 'bg-gray-50 dark:bg-gray-950 border-gray-100 dark:border-gray-800 hover:bg-white dark:hover:bg-gray-900 hover:shadow-sm'}`}>
+                <div key={idx} className="flex items-center gap-3 p-3 rounded-2xl border bg-emerald-50/50 dark:bg-emerald-950/20 border-emerald-100 dark:border-emerald-800/30">
                   <div className={`w-2 h-2 rounded-full shrink-0 ${cfg.dot}`} />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${cfg.light}`}>{cfg.label}</span>
                       <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">
-                        {new Date(s.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
+                        {new Date(sessionDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' })}
                       </span>
                     </div>
                     <div className="text-xs font-bold text-gray-800 dark:text-gray-200 truncate mt-0.5">{s.titre}</div>
                     <div className="text-[10px] text-gray-400 dark:text-gray-500 font-medium">{s.duree_minutes} min</div>
                   </div>
-                  <button onClick={() => !isSaved && handleSaveSession(s, idx)} disabled={isSaved || isSaving}
-                    className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all shrink-0 ${
-                      isSaved ? 'bg-emerald-100 text-emerald-600' : 'bg-blue-100 dark:bg-blue-950/30 text-blue-600 hover:bg-blue-200 dark:hover:bg-blue-900/50'
-                    }`}>
-                    {isSaving ? <Loader2 className="w-3 h-3 animate-spin" /> : isSaved ? <Check className="w-3 h-3" /> : <Plus className="w-3 h-3" />}
-                  </button>
+                  <span className="w-7 h-7 rounded-xl flex items-center justify-center bg-emerald-100 text-emerald-600 shrink-0">
+                    <Check className="w-3 h-3" />
+                  </span>
                 </div>
               );
             })}
+          </div>
+
+          <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+            <button onClick={() => window.location.href = '/planning?tab=calendar'}
+              className="w-full py-2.5 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 rounded-xl text-xs font-bold hover:bg-blue-100 dark:hover:bg-blue-900/50 transition-all flex items-center justify-center gap-2">
+              <CalendarDays className="w-3.5 h-3.5" />
+              Voir mon planning complet
+            </button>
           </div>
         </div>
       )}
@@ -763,15 +771,23 @@ export default function PlanningPage() {
       <Sidebar activePath="/planning" onLogout={logout} unreadCount={unreadCount} />
       <main className="flex-1 flex flex-col min-h-screen overflow-x-hidden">
         {/* HEADER */}
-        <div className="bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 px-8 py-5 flex items-center justify-between shrink-0 shadow-sm">
+        <div className="px-8 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
           <div>
-            <h1 className="text-2xl font-black text-gray-900 dark:text-white">Progression & Planning</h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Suivez votre avancement et organisez vos révisions intelligemment.</p>
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              <BarChart3 className="w-6 h-6 text-blue-600" />
+              Progression & Planning
+            </h1>
+            <p className="text-gray-500 mt-0.5 dark:text-gray-400">Suivez votre avancement et organisez vos révisions intelligemment.</p>
           </div>
           <div className="flex items-center gap-3">
-            <button className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+            <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
               <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-            </button>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </Link>
             <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-blue-200 dark:shadow-none">
               {firstName[0]?.toUpperCase()}
             </div>

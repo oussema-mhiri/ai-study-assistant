@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import toast from 'react-hot-toast';
 import {
   Brain, Bell, Settings, User, Mail, School, BookOpen, GraduationCap,
-  Layers as LayersIcon, Moon, Sun, BellRing, Mail as MailIcon, Loader2, Save
+  Layers as LayersIcon, Moon, Sun, BellRing, Mail as MailIcon, Loader2, Save, Lock
 } from 'lucide-react';
 
 function Toggle({ enabled, onChange, label, icon: Icon }) {
@@ -95,6 +95,13 @@ export default function ParametresPage() {
   const [darkMode, setDarkMode] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailSummaries, setEmailSummaries] = useState(true);
+  const [notifHour, setNotifHour] = useState('18:00');
+  const [savingNotif, setSavingNotif] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -110,6 +117,9 @@ export default function ParametresPage() {
       setMajor(user.major || '');
       setIaLevel(user.ia_level || 'Moyen');
       setResponseMode(user.response_mode || 'Détaillé');
+      setPushNotifications(user.notif_push !== false);
+      setEmailSummaries(user.notif_email !== false);
+      setNotifHour(user.notif_hour || '18:00');
     }
   }, [user]);
 
@@ -150,6 +160,47 @@ export default function ParametresPage() {
       toast.error(err.response?.data?.message || 'Erreur lors de la sauvegarde.');
     } finally {
       setSavingPrefs(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword) {
+      return toast.error('Remplissez les deux champs.');
+    }
+    if (newPassword.length < 6) {
+      return toast.error('Le nouveau mot de passe doit faire au moins 6 caractères.');
+    }
+    if (newPassword !== confirmPassword) {
+      return toast.error('Les mots de passe ne correspondent pas.');
+    }
+    setChangingPassword(true);
+    try {
+      await api.put('/auth/password', { currentPassword, newPassword });
+      toast.success('Mot de passe changé avec succès !');
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors du changement.');
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleSaveNotif = async (overrides = {}) => {
+    setSavingNotif(true);
+    const payload = {
+      notifPush: overrides.notifPush ?? pushNotifications,
+      notifEmail: overrides.notifEmail ?? emailSummaries,
+      notifHour: overrides.notifHour ?? notifHour,
+    };
+    try {
+      await api.put('/auth/notif-preferences', payload);
+      toast.success('Préférences de notification sauvegardées !');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Erreur lors de la sauvegarde.');
+    } finally {
+      setSavingNotif(false);
     }
   };
 
@@ -254,16 +305,81 @@ export default function ParametresPage() {
               />
               <Toggle
                 enabled={pushNotifications}
-                onChange={setPushNotifications}
+                onChange={(v) => { setPushNotifications(v); handleSaveNotif({ notifPush: v }); }}
                 label="Notifications push"
                 icon={BellRing}
               />
               <Toggle
                 enabled={emailSummaries}
-                onChange={setEmailSummaries}
-                label="Emails de résumé"
+                onChange={(v) => { setEmailSummaries(v); handleSaveNotif({ notifEmail: v }); }}
+                label="Emails de rappel"
                 icon={MailIcon}
               />
+            </div>
+            <div className="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <BellRing className="w-4 h-4 text-gray-400" strokeWidth={1.8} />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Heure des rappels</span>
+                </div>
+                <input
+                  type="time"
+                  value={notifHour}
+                  onChange={(e) => setNotifHour(e.target.value)}
+                  onBlur={(e) => handleSaveNotif({ notifHour: e.target.value })}
+                  className="px-3 py-1.5 text-sm border border-gray-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-colors"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* SECTION CHANGEMENT DE MOT DE PASSE */}
+          <div className="bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-800 shadow-sm p-6 mb-6">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white flex items-center gap-2 mb-5">
+              <Lock className="w-5 h-5 text-blue-500" />
+              Changer le mot de passe
+            </h2>
+            <div className="space-y-4 max-w-md">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Mot de passe actuel</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Nouveau mot de passe</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Confirmer le mot de passe</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3 py-2.5 border border-gray-200 dark:border-gray-600 rounded-xl text-sm bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleChangePassword}
+                disabled={changingPassword || !currentPassword || !newPassword || !confirmPassword}
+                className="flex items-center gap-2 px-6 py-2.5 bg-blue-600 text-white rounded-xl text-sm font-medium hover:bg-blue-700 transition-all shadow-md shadow-blue-200 disabled:opacity-50"
+              >
+                {changingPassword ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                {changingPassword ? 'Changement...' : 'Changer le mot de passe'}
+              </button>
             </div>
           </div>
 

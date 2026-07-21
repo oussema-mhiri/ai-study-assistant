@@ -1,4 +1,5 @@
 const Document = require('../models/Document');
+const ExerciseResult = require('../models/ExerciseResult');
 const { extractTextFromFile } = require('../services/extractService');
 const { generateExercisesFromText, checkExerciseAnswers } = require('../services/geminiService');
 
@@ -43,7 +44,7 @@ exports.generateExercises = async (req, res) => {
 
 exports.checkExercises = async (req, res) => {
   try {
-    const { exercises, userAnswers } = req.body;
+    const { exercises, userAnswers, matiereId, difficulty, responseTimes } = req.body;
     if (!exercises || !userAnswers) {
       return res.status(400).json({ message: 'exercises et userAnswers requis' });
     }
@@ -52,6 +53,24 @@ exports.checkExercises = async (req, res) => {
     }
 
     const results = await checkExerciseAnswers(exercises, userAnswers);
+
+    // Persister les résultats si matiereId est fourni
+    if (matiereId) {
+      try {
+        const resultsToSave = exercises.map((ex, i) => ({
+          type: ex.type || 'ouverte',
+          question: ex.question,
+          userAnswer: userAnswers[i],
+          correctAnswer: ex.correctAnswer,
+          isCorrect: results[i]?.isCorrect || false,
+          responseTimeMs: responseTimes?.[i] || null,
+        }));
+        await ExerciseResult.saveMultiple(req.userId, matiereId, resultsToSave, difficulty);
+      } catch (saveErr) {
+        console.error('Erreur sauvegarde résultats exercices:', saveErr);
+      }
+    }
+
     res.json({ results });
   } catch (error) {
     console.error('Erreur correction exercices:', error);

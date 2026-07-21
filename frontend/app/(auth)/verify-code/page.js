@@ -1,11 +1,11 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import api from '@/lib/api';
 import { Key, Loader2, Brain, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
-export default function VerifyCodePage() {
+function VerifyCodeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const email = searchParams.get('email');
@@ -31,10 +31,7 @@ export default function VerifyCodePage() {
         code,
       });
 
-      // Stocker le token temporaire dans sessionStorage
       sessionStorage.setItem('resetTempToken', res.data.tempToken);
-
-      // Rediriger vers la page de réinitialisation
       router.push('/reset-password');
     } catch (err) {
       setError(err.response?.data?.message || 'Code invalide.');
@@ -45,7 +42,6 @@ export default function VerifyCodePage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl p-8">
-        {/* Header */}
         <div className="flex items-center gap-2 mb-6">
           <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-600 flex items-center justify-center shadow-md">
             <Brain className="w-5 h-5 text-white" />
@@ -101,5 +97,17 @@ export default function VerifyCodePage() {
         </Link>
       </div>
     </div>
+  );
+}
+
+export default function VerifyCodePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+      </div>
+    }>
+      <VerifyCodeContent />
+    </Suspense>
   );
 }

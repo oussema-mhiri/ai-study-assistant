@@ -18,9 +18,9 @@ const QuizResult = {
     const results = [];
     for (const ans of answers) {
       const res = await pool.query(
-        `INSERT INTO quiz_results (user_id, quiz_id, question_id, reponse_donnee, est_correct)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [userId, quizId, ans.questionId, ans.reponseDonnee, ans.estCorrect]
+        `INSERT INTO quiz_results (user_id, quiz_id, question_id, reponse_donnee, est_correct, response_time_ms)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [userId, quizId, ans.questionId, ans.reponseDonnee, ans.estCorrect, ans.responseTimeMs || null]
       );
       results.push(res.rows[0]);
     }

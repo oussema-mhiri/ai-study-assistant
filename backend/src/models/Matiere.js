@@ -65,6 +65,21 @@ const Matiere = {
     const result = await pool.query(query, [id, userId]);
     return result.rows[0];
   },
+
+  // Trouver les examens à venir (dans les 3 prochains jours)
+  findUpcomingExams: async (daysAhead = 3) => {
+    const query = `
+      SELECT m.id, m.nom, m.date_examen, m.user_id, u.full_name, u.email, u.notif_push, u.notif_email, u.notif_hour
+      FROM matieres m
+      JOIN users u ON u.id = m.user_id
+      WHERE m.date_examen IS NOT NULL
+        AND m.date_examen BETWEEN CURRENT_DATE AND CURRENT_DATE + $1::interval
+        AND u.notif_push = true
+      ORDER BY m.date_examen ASC
+    `;
+    const result = await pool.query(query, [`${daysAhead} days`]);
+    return result.rows;
+  },
 };
 
 module.exports = Matiere;

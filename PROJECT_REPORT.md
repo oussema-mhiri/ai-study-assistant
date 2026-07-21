@@ -290,25 +290,44 @@ frontend/
 **Backend :** `quizController.js`, `exerciseController.js`, `geminiService.js`
 
 **Quiz :**
-- Generation de QCM via Gemini a partir d'un document
+- Generation de questions via Gemini a partir d'un document
+- **Types de questions** : QCM (60%) + Vrai/Faux (40%), melange automatique
 - Parametres : nombre de questions (1-50), difficulte (Facile/Moyen/Difficile)
-- Stockage en base : quiz + questions avec options JSONB
-- Format de sortie : questions avec 4 propositions (A, B, C, D) et reponse correcte
+- Stockage en base : quiz + questions avec type dynamique (`qcm`, `true_false`)
+- Format QCM : 4 propositions (A, B, C, D) avec reponse correcte
+- Format Vrai/Faux : 2 options (Vrai/Faux) avec reponse correcte (A/B)
 
 **Exercices :**
-- Generation d'exercices QCM ou questions ouvertes via Gemini
+- Generation d'exercices varies via Gemini : QCM, Vrai/Faux, questions ouvertes, exercices a trous
+- **4 types d'exercices** :
+  - `qcm` : questions a choix multiples avec 4 options
+  - `true_false` : affirmations a valider (Vrai/Faux)
+  - `ouverte` : questions necessitant une reponse redigee
+  - `fill_in_blank` : phrases avec trous a completer (marques par ___)
 - Parametres : nombre d'exercices (1-20), difficulte
 - **Correction IA** : soumission des reponses a Gemini pour evaluation avec feedback personnalise
-- Fallback : comparaison directe pour les QCM si parsing JSON echoue
+- **Persistance** : les resultats d'exercices sont sauvegardes en base pour le suivi de progression
+- Fallback : comparaison directe pour les QCM/Vrai/Faux si parsing JSON echoue
+
+**Niveau adaptatif :**
+- L'utilisateur peut choisir entre **difficulte manuelle** (Facile/Moyen/Difficile) ou **adaptatif**
+- Mode adaptatif : commence a **Facile**, s'ajuste automatiquement selon les performances
+- Calcul base sur les 20 derniers resultats (quiz + exercices) avec ponderation (60% quiz, 40% exercices)
+- Score >= 80% → Difficile, >= 50% → Moyen, < 50% → Facile
+- Badge indicateur affichant la difficulte recommandee et le score moyen
 
 **Frontend :** `matieres/page.js`
 
 - Interface de quiz interactive avec selection de reponses par radio buttons
+- **Boutons Vrai/Faux** grand format pour les questions true_false (style boutons colores)
 - Correction visuelle vert/rouge apres soumission
 - Affichage du score (nombre correct / total, pourcentage)
 - Possibilite de revoir les erreurs
-- Interface d'exercices avec support QCM et questions ouvertes
+- Interface d'exercices avec support des 4 types
+- **Tags colores** indiquant le type de chaque exercice (QCM bleu, Vrai/Faux violet, A trous ambre, Ouverte vert)
+- **Champ de saisie** pour les exercices a trous avec placeholder contextuel
 - Feedback de correction affiche pour chaque exercice
+- **4 boutons radio** pour la difficulte : Facile, Moyen, Difficile, Adaptatif (avec icone et badge)
 
 ### 5.6 Planning de revision
 
@@ -380,6 +399,44 @@ frontend/
 - Toggles pour theme sombre, notifications push, emails de resume
 - Sauvegarde via `PUT /auth/profile` et `PUT /auth/preferences`
 
+### 5.10 Flashcards et repétition espacée
+
+**Backend :** `flashcardController.js`, `Flashcard.js`, `FlashcardReview.js`, `spacedRepetition.js`, `geminiService.js`
+
+- **Generation de flashcards** via Gemini a partir d'un document
+- **4 categories** : definition, concept, formule, exemple
+- **Algorithme SM-2** (SuperMemo 2) pour la répétition espacée :
+  - Qualité de réponse : 0 (Encore) à 5 (Très facile)
+  - Facteur de facilité (EF) ajusté selon la performance
+  - Intervalle de révision : 1j → 6j → 18j → ... (progressif)
+  - Reset complet si qualité < 3 (mauvaise réponse)
+- **Calcul de la prochaine révision** : date basée sur l'intervalle et le facteur de facilité
+- **Statistiques** : total cartes, cartes à réviser, cartes maîtrisées, facilité moyenne
+- **Persistance** : les révisions sont stockées en base (`flashcard_reviews`) avec historique
+
+**Routes API :**
+| Méthode | Endpoint | Description |
+|---|---|---|
+| POST | `/api/flashcards/generate` | Générer des flashcards d'un document |
+| GET | `/api/flashcards/subject/:matiereId` | Lister les cartes d'une matière |
+| GET | `/api/flashcards/subject/:matiereId/due` | Cartes à réviser aujourd'hui |
+| GET | `/api/flashcards/subject/:matiereId/stats` | Statistiques |
+| POST | `/api/flashcards/:id/review` | Enregistrer une réponse (0-5) |
+| DELETE | `/api/flashcards/:id` | Supprimer une carte |
+
+**Frontend :** `matieres/page.js`
+
+- **Section Flashcards** avec même style que Quiz/Exercices
+- Formulaire de génération (sélecteur de document, nombre de cartes, bouton "Générer")
+- **4 cartes de statistiques** : Total, À réviser, Maîtrisées, Facilité moyenne
+- **Bouton "Réviser"** affichant le nombre de cartes dues
+- **Liste des flashcards** générées avec catégorie et bouton de suppression
+- **Modal de révision** (overlay plein écran) :
+  - Carte animée avec flip au clic (Recto/Verso)
+  - Compteur "Révision — 3/15"
+  - **4 boutons de notation** colorés : Encore (rouge), Difficile (orange), Bon (vert), Facile (bleu)
+  - Fermeture par bouton X
+
 ---
 
 ## 6. Base de donnees
@@ -393,12 +450,15 @@ frontend/
 | `documents` | Fichiers uploades | id, nom_fichier, type, url, matiere_id (FK->matieres), user_id (FK->users), uploaded_at |
 | `resumes` | Analyses IA des documents | id, type (court/detaillé/points_cles/definitions), contenu, document_id (FK->documents), created_at |
 | `quizs` | Quiz generes | id, titre, niveau, matiere_id (FK->matieres), user_id (FK->users), created_at |
-| `questions` | Questions de quiz | id, contenu, type (qcm/ouverte), bonne_reponse, options (JSONB), quiz_id (FK->quizs), created_at |
+| `questions` | Questions de quiz | id, contenu, type (qcm/true_false), bonne_reponse, options (JSONB), quiz_id (FK->quizs), created_at |
 | `quiz_results` | Reponses aux quiz | id, user_id (FK->users), quiz_id (FK->quizs), question_id (FK->questions), reponse_donnee, est_correct, answered_at |
+| `exercise_results` | Resultats d'exercices | id, user_id (FK->users), matiere_id (FK->matieres), exercise_type, question, user_answer, correct_answer, is_correct, difficulty, answered_at |
 | `conversations` | Sessions chatbot | id, user_id (FK->users), matiere_id (FK->matieres), document_id (FK->documents), titre, created_at, updated_at |
 | `messages` | Messages de chat | id, conversation_id (FK->conversations), sender (user/ia), content, created_at |
 | `sessions_planning` | Sessions de revision | id, user_id (FK->users), matiere_id (FK->matieres), date_session, heure_debut, duree_minutes, type, titre, statut, created_at |
 | `notifications` | Notifications in-app | id, user_id (FK->users), titre, message, type, lue, created_at |
+| `flashcards` | Flashcards de revision | id, user_id (FK->users), matiere_id (FK->matieres), document_id (FK->documents), recto, verso, categorie, created_at |
+| `flashcard_reviews` | Historique de revision SM-2 | id, flashcard_id (FK->flashcards), user_id (FK->users), ease_factor, interval_days, repetitions, next_review, last_review, quality, created_at |
 
 ### Relations entre les tables
 
@@ -407,17 +467,21 @@ users ---+--- matieres ---+--- documents ------- resumes
          |                |--- quizs ------- questions
          |                |--- conversations --- messages
          |                |--- sessions_planning
+         |                |--- exercise_results
+         |                |--- flashcards --- flashcard_reviews
          |--- quiz_results (-> quizs, questions)
          |--- notifications
          |--- (google_id pour OAuth)
 ```
 
 - **`users`** : table centrale, toutes les autres tables sont liees via `user_id` avec `ON DELETE CASCADE`
-- **`matieres`** : organisent les documents, quiz, conversations et sessions
+- **`matieres`** : organisent les documents, quiz, conversations, sessions et flashcards
 - **`documents`** : lies a une matiere, analyses pour produire des `resumes`
-- **`quizs`** -> **`questions`** : relation un a plusieurs
+- **`quizs`** -> **`questions`** : relation un a plusieurs (types: qcm, true_false)
 - **`conversations`** -> **`messages`** : relation un a plusieurs
-- **`quiz_results`** : table de jointure entre users, quizs et questions pour le suivi
+- **`quiz_results`** : suivi des reponses aux quiz
+- **`exercise_results`** : suivi des resultats d'exercices (pour difficulte adaptative)
+- **`flashcards`** -> **`flashcard_reviews`** : systeme de revision avec algorithme SM-2
 
 ---
 
@@ -482,6 +546,7 @@ users ---+--- matieres ---+--- documents ------- resumes
 | Methode | Endpoint | Description | Auth |
 |---|---|---|---|
 | GET | `/api/progress/:matiereId` | Dashboard de progression complet | Oui |
+| GET | `/api/progress/adaptive-difficulty/:matiereId` | Difficulte adaptative (score + recommandation) | Oui |
 | POST | `/api/progress/quiz-result` | Enregistrer les resultats d'un quiz | Oui |
 
 ### Planning & Notifications
@@ -494,6 +559,16 @@ users ---+--- matieres ---+--- documents ------- resumes
 | POST | `/api/planning/generate` | Generer un planning IA | Oui |
 | GET | `/api/planning/notifications` | Notifications + count non lues | Oui |
 | PATCH | `/api/planning/notifications/:id/read` | Marquer comme lu (`id=all` pour tout) | Oui |
+
+### Flashcards
+| Methode | Endpoint | Description | Auth |
+|---|---|---|---|
+| POST | `/api/flashcards/generate` | Generer des flashcards a partir d'un document | Oui |
+| GET | `/api/flashcards/subject/:matiereId` | Lister les flashcards d'une matiere | Oui |
+| GET | `/api/flashcards/subject/:matiereId/due` | Cartes a reviser aujourd'hui | Oui |
+| GET | `/api/flashcards/subject/:matiereId/stats` | Statistiques flashcards | Oui |
+| POST | `/api/flashcards/:id/review` | Enregistrer une reponse (0-5, SM-2) | Oui |
+| DELETE | `/api/flashcards/:id` | Supprimer une flashcard | Oui |
 
 ### Routes de test
 | Methode | Endpoint | Description | Auth |
@@ -510,12 +585,14 @@ users ---+--- matieres ---+--- documents ------- resumes
 
 **AI Study Assistant** est une application web complete et fonctionnelle qui integre de maniere coherente l'intelligence artificielle (Google Gemini) dans un workflow d'apprentissage universitaire. Le projet couvre l'ensemble du parcours etudiant :
 
-- **Organisation** : matieres, documents, planning
-- **Apprentissage actif** : quiz, exercices, chatbot contextuel
-- **Suivi** : progression chiffree, analyse IA, notifications
-- **Experience utilisateur** : interface moderne (Tailwind), theme sombre, streaming en temps reel
+- **Organisation** : matieres, documents, planning intelligent
+- **Apprentissage actif** : quiz (QCM + Vrai/Faux), exercices (4 types), flashcards avec repétition espacée SM-2, chatbot contextuel
+- **Suivi** : progression chiffree, difficulte adaptative, analyse IA, notifications
+- **Experience utilisateur** : interface moderne (Tailwind), theme sombre, streaming en temps reel, revision interactive
 
 Le stack technique est moderne et coherent (React 19, Next.js 16, Express 5, PostgreSQL, Gemini API). L'architecture en couches (routes -> controllers -> services -> models) assure une bonne separation des responsabilites. Le pipeline d'analyse IA (extraction -> Gemini -> stockage) est bien structure et supporte multiples formats de fichiers.
+
+Le systeme de difficulte adaptative analyse les performances passées (quiz + exercices) pour ajuster automatiquement le niveau, offrant une experience d'apprentissage personnalisee. Les flashcards avec l'algorithme SM-2 optimisent la retention a long terme.
 
 ### Pistes d'amelioration
 

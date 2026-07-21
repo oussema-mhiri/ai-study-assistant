@@ -158,6 +158,59 @@ const createTables = async () => {
   `;
 
   // ================================
+  // 6f. Table EXERCISE_RESULTS
+  // ================================
+  const createExerciseResultsTable = `
+    CREATE TABLE IF NOT EXISTS exercise_results (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      matiere_id INTEGER REFERENCES matieres(id) ON DELETE CASCADE,
+      exercise_type VARCHAR(20) NOT NULL,
+      question TEXT NOT NULL,
+      user_answer TEXT,
+      correct_answer TEXT,
+      is_correct BOOLEAN NOT NULL DEFAULT false,
+      difficulty VARCHAR(20),
+      answered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
+  // 6g. Table FLASHCARDS
+  // ================================
+  const createFlashcardsTable = `
+    CREATE TABLE IF NOT EXISTS flashcards (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      matiere_id INTEGER REFERENCES matieres(id) ON DELETE CASCADE,
+      document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
+      recto TEXT NOT NULL,
+      verso TEXT NOT NULL,
+      categorie VARCHAR(50),
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  // ================================
+  // 6h. Table FLASHCARD_REVIEWS
+  // ================================
+  const createFlashcardReviewsTable = `
+    CREATE TABLE IF NOT EXISTS flashcard_reviews (
+      id SERIAL PRIMARY KEY,
+      flashcard_id INTEGER REFERENCES flashcards(id) ON DELETE CASCADE,
+      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+      ease_factor DECIMAL(3,2) DEFAULT 2.50,
+      interval_days INTEGER DEFAULT 0,
+      repetitions INTEGER DEFAULT 0,
+      next_review DATE NOT NULL DEFAULT CURRENT_DATE,
+      last_review DATE,
+      quality INTEGER,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(flashcard_id, user_id)
+    );
+  `;
+
+  // ================================
   // 6c. Table MESSAGES
   // ================================
   const createMessagesTable = `
@@ -183,6 +236,11 @@ const createTables = async () => {
     ALTER TABLE conversations ADD COLUMN IF NOT EXISTS document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE;
     ALTER TABLE matieres ADD COLUMN IF NOT EXISTS date_examen DATE;
     ALTER TABLE matieres ADD COLUMN IF NOT EXISTS couleur VARCHAR(20) DEFAULT '#3B82F6';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS notif_push BOOLEAN DEFAULT true;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS notif_email BOOLEAN DEFAULT true;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS notif_hour TIME DEFAULT '18:00';
+    ALTER TABLE quiz_results ADD COLUMN IF NOT EXISTS response_time_ms INTEGER;
+    ALTER TABLE exercise_results ADD COLUMN IF NOT EXISTS response_time_ms INTEGER;
   `;
 
   try {
@@ -209,6 +267,15 @@ const createTables = async () => {
 
     await pool.query(createMessagesTable);
     console.log('✅ Table "messages" créée ou déjà existante');
+
+    await pool.query(createExerciseResultsTable);
+    console.log('✅ Table "exercise_results" créée ou déjà existante');
+
+    await pool.query(createFlashcardsTable);
+    console.log('✅ Table "flashcards" créée ou déjà existante');
+
+    await pool.query(createFlashcardReviewsTable);
+    console.log('✅ Table "flashcard_reviews" créée ou déjà existante');
 
     await pool.query(createQuizResultsTable);
     console.log('✅ Table "quiz_results" créée ou déjà existante');

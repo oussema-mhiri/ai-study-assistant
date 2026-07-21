@@ -300,3 +300,71 @@ exports.updatePreferences = async (req, res) => {
     res.status(500).json({ message: 'Erreur lors de la mise à jour des préférences.' });
   }
 };
+
+// =============================================
+// 9. MISE À JOUR DES PRÉFÉRENCES DE NOTIFICATION
+// =============================================
+exports.updateNotifPreferences = async (req, res) => {
+  try {
+    const { notifPush, notifEmail, notifHour } = req.body;
+
+    const updated = await User.updateNotifPreferences(req.userId, {
+      notifPush: typeof notifPush === 'boolean' ? notifPush : undefined,
+      notifEmail: typeof notifEmail === 'boolean' ? notifEmail : undefined,
+      notifHour: notifHour || undefined,
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé' });
+    }
+
+    res.json(updated);
+  } catch (error) {
+    console.error('Erreur updateNotifPreferences:', error);
+    res.status(500).json({ message: 'Erreur lors de la mise à jour des préférences de notification.' });
+  }
+};
+
+// =============================================
+// 10. CHANGEMENT DE MOT DE PASSE
+// =============================================
+exports.changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ message: 'Mot de passe actuel et nouveau mot de passe requis.' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ message: 'Le nouveau mot de passe doit contenir au moins 6 caractères.' });
+    }
+
+    if (currentPassword === newPassword) {
+      return res.status(400).json({ message: 'Le nouveau mot de passe doit être différent de l\'actuel.' });
+    }
+
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+    }
+
+    const fullUser = await User.findByEmail(user.email);
+    if (!fullUser || !fullUser.password_hash) {
+      return res.status(400).json({ message: 'Impossible de vérifier le mot de passe actuel.' });
+    }
+
+    const isMatch = await bcrypt.compare(currentPassword, fullUser.password_hash);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Le mot de passe actuel est incorrect.' });
+    }
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await User.updatePasswordAndClearToken(req.userId, hashedPassword);
+
+    res.json({ message: 'Mot de passe changé avec succès.' });
+  } catch (error) {
+    console.error('Erreur changePassword:', error);
+    res.status(500).json({ message: 'Erreur lors du changement de mot de passe.' });
+  }
+};

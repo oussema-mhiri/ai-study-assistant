@@ -106,17 +106,28 @@ async function chatWithContext(question, context) {
 // backend/src/services/geminiService.js
 async function generateQuizFromText(text, numQuestions = 5, difficulty = 'Moyen') {
   const prompt = `
-    Tu es un professeur. Génère un quiz de ${numQuestions} questions de type QCM (choix multiples) basé sur le texte suivant.
+    Tu es un professeur. Génère un quiz de ${numQuestions} questions basé sur le texte suivant.
     La difficulté est : ${difficulty}.
 
-    Chaque question doit avoir 4 propositions (A, B, C, D) avec une seule réponse correcte.
-    La réponse correcte doit être UNIQUEMENT la lettre (A, B, C ou D), rien d'autre.
+    Mélange les types de questions : environ 60% de QCM et 40% de Vrai/Faux.
+
+    Pour les QCM : chaque question doit avoir 4 propositions (A, B, C, D) avec une seule réponse correcte.
+    La réponse correcte doit être UNIQUEMENT la lettre (A, B, C ou D).
+
+    Pour les Vrai/Faux : la réponse correcte est "A" pour Vrai, "B" pour Faux.
 
     Retourne les questions au format JSON suivant :
     [
       {
         "question": "Texte de la question",
+        "type": "qcm",
         "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+        "correctAnswer": "A"
+      },
+      {
+        "question": "Texte de l'affirmation à valider",
+        "type": "true_false",
+        "options": ["A) Vrai", "B) Faux"],
         "correctAnswer": "A"
       }
     ]
@@ -129,19 +140,24 @@ async function generateQuizFromText(text, numQuestions = 5, difficulty = 'Moyen'
   const result = await model.generateContent(prompt);
   const raw = result.response.text();
   try {
-    // Nettoyer la réponse pour extraire le JSON
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
     let questions = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
 
-    // Nettoyer chaque question pour garantir que correctAnswer n'est qu'une lettre
     questions = questions.map(q => {
-      // Si correctAnswer est une chaîne, extraire le premier caractère alphabétique
+      // Normaliser le type
+      if (q.type !== 'qcm' && q.type !== 'true_false') {
+        q.type = 'qcm';
+      }
+      // Pour les Vrai/Faux, forcer les options si absentes
+      if (q.type === 'true_false' && (!q.options || q.options.length < 2)) {
+        q.options = ['A) Vrai', 'B) Faux'];
+      }
+      // Nettoyer correctAnswer
       if (typeof q.correctAnswer === 'string') {
         const match = q.correctAnswer.match(/[A-D]/i);
         if (match) {
           q.correctAnswer = match[0].toUpperCase();
         } else {
-          // Fallback : si aucune lettre trouvée, on prend la première option
           q.correctAnswer = 'A';
         }
       }
@@ -159,17 +175,38 @@ async function generateExercisesFromText(text, numExercises = 3, difficulty = 'M
     Tu es un professeur. Génère ${numExercises} exercices pédagogiques basés sur le texte suivant.
     Le niveau de difficulté est : ${difficulty}.
 
-    Pour chaque exercice, propose une question et sa réponse correcte.
-    Si l'exercice est un QCM, fournis 4 options (A, B, C, D).
-    Sinon, fournis une question ouverte avec sa réponse.
+    Mélange les types d'exercices de manière variée : QCM, Vrai/Faux, questions ouvertes, exercices à trous.
+    Répartis les types de manière équilibrée.
+
+    Types possibles :
+    - "qcm" : question à choix multiples avec 4 options (A, B, C, D). correctAnswer = lettre (A/B/C/D).
+    - "true_false" : affirmation à valider. options = ["A) Vrai", "B) Faux"]. correctAnswer = "A" ou "B".
+    - "ouverte" : question nécessitant une réponse rédigée. correctAnswer = la réponse complète.
+    - "fill_in_blank" : phrase avec un ou plusieurs trous (marqués par ___). correctAnswer = le mot ou terme manquant.
 
     Retourne les exercices au format JSON suivant :
     [
       {
         "question": "Texte de l'exercice",
-        "type": "qcm" ou "ouverte",
-        "options": ["A) ...", "B) ...", "C) ...", "D) ..."] (uniquement pour QCM),
-        "correctAnswer": "Réponse correcte"
+        "type": "qcm",
+        "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
+        "correctAnswer": "A"
+      },
+      {
+        "question": "Affirmation à valider",
+        "type": "true_false",
+        "options": ["A) Vrai", "B) Faux"],
+        "correctAnswer": "B"
+      },
+      {
+        "question": "Question ouverte",
+        "type": "ouverte",
+        "correctAnswer": "Réponse complète"
+      },
+      {
+        "question": "Le protocole ___ est utilisé pour le transport fiable des données.",
+        "type": "fill_in_blank",
+        "correctAnswer": "TCP"
       }
     ]
 
@@ -182,10 +219,21 @@ async function generateExercisesFromText(text, numExercises = 3, difficulty = 'M
   const raw = result.response.text();
   try {
     const jsonMatch = raw.match(/\[[\s\S]*\]/);
-    if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
-    }
-    return JSON.parse(raw);
+    let exercises = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
+
+    // Normaliser les types
+    exercises = exercises.map(ex => {
+      if (!['qcm', 'true_false', 'ouverte', 'fill_in_blank'].includes(ex.type)) {
+        ex.type = 'ouverte';
+      }
+      // Vrai/Faux : forcer les options
+      if (ex.type === 'true_false' && (!ex.options || ex.options.length < 2)) {
+        ex.options = ['A) Vrai', 'B) Faux'];
+      }
+      return ex;
+    });
+
+    return exercises;
   } catch (error) {
     console.error('Erreur parsing JSON des exercices:', error);
     throw new Error('Impossible de générer les exercices');
@@ -195,8 +243,10 @@ async function checkExerciseAnswers(exercises, userAnswers) {
   const prompt = `
     Tu es un professeur qui corrige des exercices.
     Pour chaque exercice, vérifie si la réponse de l'étudiant est correcte.
-    Pour les QCM, la réponse doit correspondre exactement à la lettre de la bonne réponse.
-    Pour les questions ouvertes, utilise ton jugement pour déterminer si la réponse est correcte ou non.
+    - Pour les QCM, la réponse doit correspondre exactement à la lettre de la bonne réponse.
+    - Pour les Vrai/Faux, la réponse doit correspondre à la lettre (A=Vrai, B=Faux).
+    - Pour les questions ouvertes, utilise ton jugement pour déterminer si la réponse est correcte ou non.
+    - Pour les exercices à trous (fill_in_blank), vérifie si le mot proposé correspond à la bonne réponse (insensible à la casse, accepte les synonymes proches).
 
     Réponds UNIQUEMENT par un tableau JSON valide, rien d'autre :
     [
@@ -222,14 +272,21 @@ async function checkExerciseAnswers(exercises, userAnswers) {
     return parsed;
   } catch (error) {
     console.error('Erreur parsing JSON correction:', error);
-    // Fallback : simple comparaison pour les QCM
     return exercises.map((ex, i) => {
-      if (ex.type === 'qcm' && ex.options) {
+      const userAns = String(userAnswers[i] || '').trim();
+      if (ex.type === 'qcm' || ex.type === 'true_false') {
         const correctLetter = ex.correctAnswer?.charAt(0)?.toUpperCase();
-        const userLetter = String(userAnswers[i] || '').charAt(0).toUpperCase();
+        const userLetter = userAns.charAt(0).toUpperCase();
         return {
           isCorrect: correctLetter === userLetter,
-          feedback: correctLetter === userLetter ? 'Bonne réponse !' : `La bonne réponse était ${correctLetter}`
+          feedback: correctLetter === userLetter ? 'Bonne réponse !' : `La bonne réponse était ${ex.correctAnswer}`
+        };
+      }
+      if (ex.type === 'fill_in_blank') {
+        const isCorrect = userAns.toLowerCase() === String(ex.correctAnswer).toLowerCase().trim();
+        return {
+          isCorrect,
+          feedback: isCorrect ? 'Bonne réponse !' : `La bonne réponse était : ${ex.correctAnswer}`
         };
       }
       return {
@@ -239,6 +296,110 @@ async function checkExerciseAnswers(exercises, userAnswers) {
     });
   }
 }
+
+// --- Vrai/Faux pur ---
+async function generateTrueFalseFromText(text, numQuestions = 5, difficulty = 'Moyen') {
+  const prompt = `
+    Tu es un professeur. Génère un quiz de ${numQuestions} questions VRAI ou FAUX basé sur le texte suivant.
+    La difficulté est : ${difficulty}.
+
+    Chaque question est une affirmation que l'étudiant doit juger vraie ou fausse.
+    La réponse correcte est "A" pour Vrai, "B" pour Faux.
+    Les affirmations doivent être claires, sans ambiguïté.
+    Varie les affirmations : environ 50% vraies et 50% fausses.
+
+    Retourne les questions au format JSON suivant :
+    [
+      {
+        "question": "Affirmation à juger vraie ou fausse",
+        "type": "true_false",
+        "options": ["A) Vrai", "B) Faux"],
+        "correctAnswer": "A"
+      }
+    ]
+
+    Texte :
+    ${text}
+
+    Réponse (uniquement le JSON) :
+  `;
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    let questions = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
+
+    questions = questions.map(q => {
+      q.type = 'true_false';
+      if (!q.options || q.options.length < 2) {
+        q.options = ['A) Vrai', 'B) Faux'];
+      }
+      if (typeof q.correctAnswer === 'string') {
+        const match = q.correctAnswer.match(/[A-B]/i);
+        q.correctAnswer = match ? match[0].toUpperCase() : 'A';
+      } else {
+        q.correctAnswer = 'A';
+      }
+      return q;
+    });
+
+    return questions;
+  } catch (error) {
+    console.error('Erreur parsing JSON vrai/faux:', error);
+    throw new Error('Impossible de générer les questions vrai/faux');
+  }
+}
+
+// --- Flashcards ---
+async function generateFlashcardsFromText(text, numCards = 10) {
+  const prompt = `
+    Tu es un professeur. Génère ${numCards} flashcards de révision basées sur le texte suivant.
+    Chaque flashcard a un recto (question ou concept) et un verso (réponse ou explication).
+
+    Catégories possibles : "definition", "concept", "formule", "exemple"
+
+    Retourne les flashcards au format JSON suivant :
+    [
+      {
+        "recto": "Question ou concept à retenir",
+        "verso": "Réponse ou explication détaillée",
+        "categorie": "definition"
+      }
+    ]
+
+    Règles :
+    - Le recto doit être une question claire et concise
+    - Le verso doit être une réponse complète et pédagogique
+    - Varie les catégories (definitions, concepts, formules, exemples)
+    - Le contenu doit être basé UNIQUEMENT sur le texte fourni
+
+    Texte :
+    ${text}
+
+    Réponse (uniquement le JSON) :
+  `;
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    let cards = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
+
+    // Normaliser les catégories
+    const validCategories = ['definition', 'concept', 'formule', 'exemple'];
+    cards = cards.map(card => {
+      if (!validCategories.includes(card.categorie)) {
+        card.categorie = 'concept';
+      }
+      return card;
+    });
+
+    return cards;
+  } catch (error) {
+    console.error('Erreur parsing JSON flashcards:', error);
+    throw new Error('Impossible de générer les flashcards');
+  }
+}
+
 async function checkExerciseAnswer(question, userAnswer, correctAnswer) {
   const prompt = `
     Tu es un professeur. Voici un exercice, la réponse correcte, et la réponse proposée par l'étudiant.
@@ -311,6 +472,60 @@ ${question}
   return result.stream;
 }
 
+// --- Recommandation de ressources ---
+async function recommendResources(text, matiereName) {
+  const prompt = `
+    Tu es un assistant pédagogique. En te basant sur le contenu du cours de "${matiereName}" ci-dessous, recommande 6 à 8 ressources externes utiles pour l'étudiant.
+
+    Types de ressources à recommander (mélange varié) :
+    - Vidéos YouTube éducatives (avec des URLs réelles du domaine youtube.com ou youtube.fr)
+    - Cours en ligne (Coursera, edX, Khan Academy, OpenClassrooms, etc.)
+    - Articles académiques ou tutoriels
+    - Exercices interactifs ou quiz en ligne
+
+    Pour chaque ressource, fournis :
+    - titre : titre clair et descriptif
+    - type : "video" | "cours" | "article" | "exercice"
+    - url : une URL réaliste et plausible (format youtube.com/watch?v=... ou coursera.org/... etc.)
+    - description : description courte (1-2 phrases) expliquant en quoi cette ressource est utile
+    - source : la plateforme d'origine (YouTube, Coursera, Khan Academy, etc.)
+
+    Retourne UNIQUEMENT un JSON valide, rien d'autre :
+    [
+      {
+        "titre": "...",
+        "type": "video",
+        "url": "https://www.youtube.com/watch?v=...",
+        "description": "...",
+        "source": "YouTube"
+      }
+    ]
+
+    Texte du cours :
+    ${text.substring(0, 6000)}
+
+    Réponse (uniquement le JSON) :
+  `;
+  const result = await model.generateContent(prompt);
+  const raw = result.response.text();
+  try {
+    const jsonMatch = raw.match(/\[[\s\S]*\]/);
+    let resources = jsonMatch ? JSON.parse(jsonMatch[0]) : JSON.parse(raw);
+    const validTypes = ['video', 'cours', 'article', 'exercice'];
+    resources = resources.map(r => ({
+      titre: r.titre || 'Ressource',
+      type: validTypes.includes(r.type) ? r.type : 'article',
+      url: r.url || '#',
+      description: r.description || '',
+      source: r.source || 'Web',
+    }));
+    return resources;
+  } catch (error) {
+    console.error('Erreur parsing JSON ressources:', error);
+    return [];
+  }
+}
+
 module.exports = {
   testGemini,
   generateSummary,
@@ -320,6 +535,9 @@ module.exports = {
   chatWithContext,
   chatWithContextStream,
   generateQuizFromText,
+  generateTrueFalseFromText,
   generateExercisesFromText,
+  generateFlashcardsFromText,
   checkExerciseAnswers,
+  recommendResources,
 };
