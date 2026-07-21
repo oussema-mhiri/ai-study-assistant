@@ -245,52 +245,52 @@ const createTables = async () => {
 
   try {
     await pool.query(createUsersTable);
-    console.log('✅ Table "users" créée ou déjà existante');
+    console.log('Table "users" créée ou déjà existante');
 
     await pool.query(createMatiereTable);
-    console.log('✅ Table "matieres" créée ou déjà existante');
+    console.log('Table "matieres" créée ou déjà existante');
 
     await pool.query(createDocumentTable);
-    console.log('✅ Table "documents" créée ou déjà existante');
+    console.log('Table "documents" créée ou déjà existante');
 
     await pool.query(createResumeTable);
-    console.log('✅ Table "resumes" créée ou déjà existante');
+    console.log('Table "resumes" créée ou déjà existante');
 
     await pool.query(createQuizTable);
-    console.log('✅ Table "quizs" créée ou déjà existante');
+    console.log('Table "quizs" créée ou déjà existante');
 
     await pool.query(createQuestionTable);
-    console.log('✅ Table "questions" créée ou déjà existante');
+    console.log('Table "questions" créée ou déjà existante');
 
     await pool.query(createConversationsTable);
-    console.log('✅ Table "conversations" créée ou déjà existante');
+    console.log('Table "conversations" créée ou déjà existante');
 
     await pool.query(createMessagesTable);
-    console.log('✅ Table "messages" créée ou déjà existante');
+    console.log('Table "messages" créée ou déjà existante');
 
     await pool.query(createExerciseResultsTable);
-    console.log('✅ Table "exercise_results" créée ou déjà existante');
+    console.log('Table "exercise_results" créée ou déjà existante');
 
     await pool.query(createFlashcardsTable);
-    console.log('✅ Table "flashcards" créée ou déjà existante');
+    console.log('Table "flashcards" créée ou déjà existante');
 
     await pool.query(createFlashcardReviewsTable);
-    console.log('✅ Table "flashcard_reviews" créée ou déjà existante');
+    console.log('Table "flashcard_reviews" créée ou déjà existante');
 
     await pool.query(createQuizResultsTable);
-    console.log('✅ Table "quiz_results" créée ou déjà existante');
+    console.log('Table "quiz_results" créée ou déjà existante');
 
     await pool.query(createSessionsPlanningTable);
-    console.log('✅ Table "sessions_planning" créée ou déjà existante');
+    console.log('Table "sessions_planning" créée ou déjà existante');
 
     await pool.query(createNotificationsTable);
-    console.log('✅ Table "notifications" créée ou déjà existante');
+    console.log('Table "notifications" créée ou déjà existante');
 
     await pool.query(migrateExistingTable);
-    console.log('✅ Colonnes Google OAuth et reset password vérifiées/ajoutées');
+    console.log('Colonnes Google OAuth et reset password vérifiées/ajoutées');
 
   } catch (err) {
-    console.error('❌ Erreur création/migration tables :', err);
+    console.error('Erreur création/migration tables :', err);
   }
 };
 

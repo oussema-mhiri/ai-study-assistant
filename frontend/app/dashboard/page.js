@@ -7,7 +7,7 @@ import api from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import {
   FileText, BookOpen, Clock, Upload, Bot, CalendarPlus, BarChart3,
-  Bell, Search, Layers, CalendarDays, Loader2, ChevronRight, PlusCircle,
+  Bell, Layers, CalendarDays, Loader2, ChevronRight, PlusCircle,
   Sparkles, Target, Brain, GraduationCap, AlertTriangle, CheckCircle2, Home,
 } from 'lucide-react';
 import {
@@ -141,7 +141,6 @@ export default function DashboardPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     if (!authLoading && !user) router.push('/login');
@@ -194,9 +193,7 @@ export default function DashboardPage() {
     return d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
   };
 
-  const matieres = (data?.matieres || []).filter(m =>
-    !searchQuery || m.nom?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const matieres = data?.matieres || [];
   const allMatieres = data?.matieres || [];
   const sessions = data?.upcomingSessions || [];
   const exams = data?.upcomingExams || [];
@@ -213,22 +210,13 @@ export default function DashboardPage() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
               <Home className="w-6 h-6 text-blue-600" />
-              Bonjour, {firstName} 👋
+              Bonjour, {firstName}
             </h1>
             <p className="text-gray-500 mt-0.5 dark:text-gray-400">
               Centralisez votre apprentissage, organisez vos cours et boostez vos résultats avec l'IA.
             </p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="relative hidden sm:block">
-              <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 dark:text-gray-500" />
-              <input
-                type="text" placeholder="Rechercher une matière..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 pr-4 py-2 text-sm border border-gray-200 rounded-xl w-48 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 dark:border-gray-700 dark:text-white dark:placeholder:text-gray-500"
-              />
-            </div>
             <Link href="/notifications" className="relative w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 transition dark:hover:bg-gray-800">
               <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               {data && data.unreadNotifications > 0 && (
@@ -237,9 +225,9 @@ export default function DashboardPage() {
                 </span>
               )}
             </Link>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white shadow-sm">
+            <Link href="/parametres" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-sm font-semibold text-white shadow-sm cursor-pointer hover:opacity-90 transition">
               {firstName[0]?.toUpperCase()}
-            </div>
+            </Link>
           </div>
         </div>
 

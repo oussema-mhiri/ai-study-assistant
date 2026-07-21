@@ -35,7 +35,7 @@ const ExerciseResult = {
 
   async getAdaptiveDifficulty(userId, matiereId) {
     const quizRes = await pool.query(
-      `SELECT qr.est_correct, q.niveau, qr.response_time_ms
+      `SELECT qr.est_correct, q.niveau, qr.response_time_ms, qu.type AS question_type
        FROM quiz_results qr
        JOIN questions qu ON qu.id = qr.question_id
        JOIN quizs q ON q.id = qr.quiz_id
@@ -46,7 +46,7 @@ const ExerciseResult = {
     );
 
     const exerciseRes = await pool.query(
-      `SELECT is_correct, difficulty, response_time_ms
+      `SELECT is_correct, difficulty, response_time_ms, exercise_type
        FROM exercise_results
        WHERE user_id = $1 AND matiere_id = $2
        ORDER BY answered_at DESC
@@ -58,12 +58,12 @@ const ExerciseResult = {
     const exerciseResults = exerciseRes.rows;
 
     const allResults = [
-      ...quizResults.map(r => ({ is_correct: r.est_correct, source: 'quiz', response_time_ms: r.response_time_ms })),
-      ...exerciseResults.map(r => ({ is_correct: r.is_correct, source: 'exercise', response_time_ms: r.response_time_ms }))
+      ...quizResults.map(r => ({ is_correct: r.est_correct, source: 'quiz', response_time_ms: r.response_time_ms, type: r.question_type || 'qcm' })),
+      ...exerciseResults.map(r => ({ is_correct: r.is_correct, source: 'exercise', response_time_ms: r.response_time_ms, type: r.exercise_type || 'ouverte' }))
     ];
 
     if (allResults.length === 0) {
-      return { difficulty: 'Facile', score: 0, confidence: 'low', totalResults: 0, avgResponseTime: 0, weakThemes: [] };
+      return { difficulty: 'Facile', score: 0, confidence: 'low', totalResults: 0, avgResponseTime: 0, weakThemes: [], repeatedErrors: false };
     }
 
     // 1. Score basé sur la réussite (50%)
@@ -92,7 +92,7 @@ const ExerciseResult = {
       else speedScore = 20;
     }
 
-    // 3. Score basé sur la régularité (30%)
+    // 3. Score basé sur la régularité (20%)
     const quizChunks = [];
     for (let i = 0; i < allResults.length; i += 5) {
       const chunk = allResults.slice(i, i + 5);
@@ -109,8 +109,50 @@ const ExerciseResult = {
       consistencyScore = quizChunks[0] * 100;
     }
 
-    // Score final pondéré
-    const score = Math.round(successScore * 0.5 + speedScore * 0.2 + consistencyScore * 0.3);
+    // 4. Détecter les erreurs répétées par type (10%)
+    // Compter les erreurs consécutives par type de question/exercice
+    const errorStreaks = {};
+    let maxErrorStreak = 0;
+    let currentStreak = 0;
+    let currentStreakType = null;
+
+    // Parcourir les résultats du plus récent au plus ancien
+    const sortedResults = [...allResults].sort((a, b) => {
+      if (a.source !== b.source) return 0;
+      return 0;
+    });
+
+    for (const r of allResults) {
+      if (!r.is_correct) {
+        if (currentStreakType === r.type) {
+          currentStreak++;
+        } else {
+          currentStreak = 1;
+          currentStreakType = r.type;
+        }
+        errorStreaks[r.type] = Math.max(errorStreaks[r.type] || 0, currentStreak);
+        maxErrorStreak = Math.max(maxErrorStreak, currentStreak);
+      } else {
+        currentStreak = 0;
+        currentStreakType = null;
+      }
+    }
+
+    // Score de pénalité pour erreurs répétées (0-100, plus bas = plus d'erreurs répétées)
+    let repeatedErrorScore = 100;
+    if (maxErrorStreak >= 5) repeatedErrorScore = 10;
+    else if (maxErrorStreak >= 4) repeatedErrorScore = 25;
+    else if (maxErrorStreak >= 3) repeatedErrorScore = 40;
+    else if (maxErrorStreak >= 2) repeatedErrorScore = 70;
+
+    // Thèmes faibles (types avec le plus d'erreurs)
+    const weakThemes = Object.entries(errorStreaks)
+      .filter(([_, streak]) => streak >= 2)
+      .sort((a, b) => b[1] - a[1])
+      .map(([type]) => type);
+
+    // Score final pondéré (50% réussite + 20% vitesse + 20% régularité + 10% erreurs répétées)
+    const score = Math.round(successScore * 0.5 + speedScore * 0.2 + consistencyScore * 0.2 + repeatedErrorScore * 0.1);
 
     // Déterminer la difficulté
     let difficulty;
@@ -126,7 +168,16 @@ const ExerciseResult = {
     // Temps moyen
     const avgResponseTime = times.length > 0 ? Math.round(times.reduce((a, b) => a + b, 0) / times.length) : 0;
 
-    return { difficulty, score, confidence, totalResults: allResults.length, avgResponseTime };
+    return {
+      difficulty,
+      score,
+      confidence,
+      totalResults: allResults.length,
+      avgResponseTime,
+      weakThemes,
+      repeatedErrors: maxErrorStreak >= 3,
+      maxErrorStreak,
+    };
   },
 
   async getHistory(userId, matiereId) {

@@ -90,7 +90,7 @@ const User = {
   },
 
   // =================================================
-  // 🆕 NOUVELLES FONCTIONS POUR LE CODE OTP (6 chiffres)
+  // NOUVELLES FONCTIONS POUR LE CODE OTP (6 chiffres)
   // =================================================
 
   // Enregistrer un code de réinitialisation (stocké en clair car c'est un code court)

@@ -37,7 +37,7 @@ const authLimiter = rateLimit({
 
 // Routes publiques
 app.get('/api/test', (req, res) => {
-  res.json({ message: 'API fonctionne ! 🚀' });
+  res.json({ message: 'API fonctionne !' });
 });
 
 // Routes d'authentification

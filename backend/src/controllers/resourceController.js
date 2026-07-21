@@ -24,11 +24,11 @@ const getRecommendations = async (req, res) => {
     let combinedText = '';
     for (const doc of documents) {
       try {
-        const filePath = path.join(__dirname, '..', '..', doc.url);
+        const filePath = path.isAbsolute(doc.url) ? doc.url : path.join(process.cwd(), doc.url);
         const text = await extractTextFromFile(filePath, doc.type);
         if (text) combinedText += text + '\n\n';
       } catch (e) {
-        // skip unreadable docs
+        console.error(`Erreur extraction fichier ${doc.nom_fichier}:`, e.message);
       }
     }
 

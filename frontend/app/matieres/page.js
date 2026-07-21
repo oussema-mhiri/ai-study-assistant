@@ -190,13 +190,13 @@ function QuizQuestion({ question, index, total, selectedAnswer, onSelect, showRe
                   {opt}
                 </span>
                 {showResult && isSelected && isCorrectAnswer && (
-                  <span className="text-xs text-green-600 font-semibold ml-auto">✅</span>
+                  <span className="text-xs text-green-600 font-semibold ml-auto">Correct</span>
                 )}
                 {showResult && isSelected && !isCorrectAnswer && (
-                  <span className="text-xs text-red-600 font-semibold ml-auto">❌</span>
+                  <span className="text-xs text-red-600 font-semibold ml-auto">Incorrect</span>
                 )}
                 {showResult && !isSelected && isCorrectAnswer && (
-                  <span className="text-xs text-green-500 ml-auto">✓ Bonne réponse</span>
+                  <span className="text-xs text-green-500 ml-auto">Bonne réponse</span>
                 )}
               </label>
             );
@@ -271,6 +271,10 @@ export default function MatieresPage() {
   const exerciseStartTime = useRef(Date.now());
   const [exerciseResponseTimes, setExerciseResponseTimes] = useState({});
 
+  // Timer quiz
+  const quizStartTime = useRef(Date.now());
+  const [quizResponseTimes, setQuizResponseTimes] = useState({});
+
   // Vrai/Faux
   const [selectedTFDoc, setSelectedTFDoc] = useState('');
   const [tfQuestions, setTfQuestions] = useState(5);
@@ -290,6 +294,19 @@ export default function MatieresPage() {
     }
   }, [user, authLoading, router]);
 
+  const fetchResources = async (matiereId) => {
+    setLoadingResources(true);
+    try {
+      const res = await api.get(`/resources/recommendations/${matiereId}`);
+      setResources(res.data.resources || []);
+    } catch (err) {
+      console.error('Erreur ressources:', err);
+      setResources([]);
+    } finally {
+      setLoadingResources(false);
+    }
+  };
+
   const fetchSubjects = async () => {
     try {
       const res = await api.get('/subjects');
@@ -297,6 +314,7 @@ export default function MatieresPage() {
       if (res.data.length > 0) {
         setSelectedSubject(res.data[0]);
         fetchDocuments(res.data[0].id);
+        fetchResources(res.data[0].id);
       }
     } catch (err) {
       console.error('Erreur chargement matières:', err);
@@ -383,6 +401,7 @@ export default function MatieresPage() {
       const analysisRes = await api.post('/ai/analyze', { documentId: newDoc.id });
       setAnalysisResult(analysisRes.data);
       fetchDocuments(selectedSubject.id);
+      fetchResources(selectedSubject.id);
     } catch (err) {
       console.error('Erreur:', err);
     } finally {
@@ -463,6 +482,8 @@ export default function MatieresPage() {
     setShowQuiz(false);
     setShowResults(false);
     setUserAnswers({});
+    setQuizResponseTimes({});
+    quizStartTime.current = Date.now();
     try {
       let effectiveDifficulty = quizDifficulty;
       if (quizUseAdaptive && selectedSubject) {
@@ -494,6 +515,10 @@ export default function MatieresPage() {
     setUserAnswers((prev) => ({
       ...prev,
       [questionId]: answer,
+    }));
+    setQuizResponseTimes((prev) => ({
+      ...prev,
+      [questionId]: Date.now() - quizStartTime.current,
     }));
   };
 
@@ -531,6 +556,7 @@ export default function MatieresPage() {
           questionId: q.id,
           reponseDonnee: userAnswer,
           estCorrect: normalizedUser && normalizedCorrect && normalizedUser === normalizedCorrect,
+          responseTimeMs: quizResponseTimes[q.id] || null,
         };
       });
       try {
@@ -790,20 +816,6 @@ export default function MatieresPage() {
     }
   };
 
-  // Ressources recommandées
-  const fetchResources = async (matiereId) => {
-    setLoadingResources(true);
-    try {
-      const res = await api.get(`/resources/recommendations/${matiereId}`);
-      setResources(res.data.resources || []);
-    } catch (err) {
-      console.error('Erreur ressources:', err);
-      setResources([]);
-    } finally {
-      setLoadingResources(false);
-    }
-  };
-
   // Vrai/Faux
   const handleGenerateTrueFalse = async () => {
     if (!selectedTFDoc) {
@@ -814,6 +826,8 @@ export default function MatieresPage() {
     setShowTF(false);
     setTfShowResults(false);
     setTfAnswers({});
+    setQuizResponseTimes({});
+    quizStartTime.current = Date.now();
     try {
       let effectiveDifficulty = tfDifficulty;
       if (tfUseAdaptive && selectedSubject) {
@@ -843,6 +857,10 @@ export default function MatieresPage() {
   const handleSelectTFAnswer = (questionId, answer) => {
     if (tfShowResults) return;
     setTfAnswers((prev) => ({ ...prev, [questionId]: answer }));
+    setQuizResponseTimes((prev) => ({
+      ...prev,
+      [questionId]: Date.now() - quizStartTime.current,
+    }));
   };
 
   const handleShowTFResults = async () => {
@@ -869,6 +887,7 @@ export default function MatieresPage() {
           questionId: q.id,
           reponseDonnee: userAnswer,
           estCorrect: userMatch && correctMatch && userMatch[0].toUpperCase() === correctMatch[0].toUpperCase(),
+          responseTimeMs: quizResponseTimes[q.id] || null,
         };
       });
       try {
@@ -944,14 +963,6 @@ export default function MatieresPage() {
               <p className="text-gray-500 mt-0.5 dark:text-gray-400">Gérez vos matières et importez vos documents pour l'analyse IA.</p>
             </div>
             <div className="flex items-center gap-4">
-              <div className="relative hidden md:block">
-                <Search className="w-4 h-4 text-gray-400 dark:text-gray-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Rechercher une matière..."
-                  className="pl-10 pr-4 py-2.5 text-sm border border-gray-200 rounded-xl w-56 focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all text-gray-900 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200"
-                />
-              </div>
               <Link href="/notifications" className="relative w-10 h-10 flex items-center justify-center rounded-xl hover:bg-gray-100 transition-colors dark:hover:bg-gray-800">
                 <Bell className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                 {unreadCount > 0 && (
@@ -960,9 +971,9 @@ export default function MatieresPage() {
                   </span>
                 )}
               </Link>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-md shadow-blue-200 dark:shadow-none">
+              <Link href="/parametres" className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold shadow-md shadow-blue-200 dark:shadow-none cursor-pointer hover:opacity-90 transition">
                 {user.full_name?.[0]?.toUpperCase() || 'U'}
-              </div>
+              </Link>
             </div>
           </div>
 
@@ -1059,7 +1070,7 @@ export default function MatieresPage() {
             </div>
             {!selectedSubject && (
               <p className="mt-4 text-sm text-amber-600 bg-amber-50 px-4 py-2 rounded-full inline-block dark:bg-amber-950/30 dark:text-amber-400">
-                ⚠️ Veuillez sélectionner une matière avant d'importer.
+                Veuillez sélectionner une matière avant d'importer.
               </p>
             )}
           </div>
@@ -1280,7 +1291,7 @@ export default function MatieresPage() {
                       : 'hover:bg-purple-50 text-gray-700 dark:hover:bg-purple-950/30 dark:text-gray-300 border-purple-300 dark:border-purple-700'
                   }`}
                 >
-                  ✨ Adaptatif
+                  Adaptatif
                 </button>
               </div>
               {adaptiveQuizInfo && (
@@ -1450,7 +1461,7 @@ export default function MatieresPage() {
                       : 'hover:bg-purple-50 text-gray-700 dark:hover:bg-purple-950/30 dark:text-gray-300 border-purple-300 dark:border-purple-700'
                   }`}
                 >
-                  ✨ Adaptatif
+                  Adaptatif
                 </button>
               </div>
               {adaptiveTFInfo && (
@@ -1618,7 +1629,7 @@ export default function MatieresPage() {
                       : 'hover:bg-purple-50 text-gray-700 dark:hover:bg-purple-950/30 dark:text-gray-300 border-purple-300 dark:border-purple-700'
                   }`}
                 >
-                  ✨ Adaptatif
+                  Adaptatif
                 </button>
               </div>
               {adaptiveExerciseInfo && (
@@ -1755,7 +1766,7 @@ export default function MatieresPage() {
                       {showCorrection && exerciseResults[idx] && (
                         <div className={`mt-2 p-2 rounded-lg ${exerciseResults[idx].isCorrect ? 'bg-green-100 border border-green-300 dark:bg-green-950/30 dark:border-green-700' : 'bg-red-100 border border-red-300 dark:bg-red-950/30 dark:border-red-700'}`}>
                           <p className="text-sm font-medium">
-                            {exerciseResults[idx].isCorrect ? '✅ Correct' : '❌ Incorrect'}
+                            {exerciseResults[idx].isCorrect ? 'Correct' : 'Incorrect'}
                           </p>
                           <p className="text-sm text-gray-700 dark:text-gray-300">Réponse correcte : {ex.correctAnswer}</p>
                           {exerciseResults[idx].feedback && (

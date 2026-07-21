@@ -35,7 +35,7 @@ async function extractKeyPoints(text) {
   `;
   const result = await model.generateContent(prompt);
   const raw = result.response.text();
-  console.log('📌 Réponse brute des points clés :', raw); // <-- LOG
+  console.log('Réponse brute des points clés :', raw); // <-- LOG
 
   // Tente de parser même sans puces
   const lines = raw.split('\n').filter(line => line.trim().length > 0);

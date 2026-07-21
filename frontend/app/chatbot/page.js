@@ -293,9 +293,9 @@ export default function ChatbotPage() {
                 </span>
               )}
             </Link>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-blue-200">
+            <Link href="/parametres" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-semibold text-sm shadow-sm shadow-blue-200 cursor-pointer hover:opacity-90 transition">
               {firstName[0]?.toUpperCase()}
-            </div>
+            </Link>
           </div>
         </div>
 
@@ -477,7 +477,7 @@ export default function ChatbotPage() {
                   <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-100 flex items-center justify-center mb-5 shadow-sm">
                     <Brain className="w-8 h-8 text-blue-600" strokeWidth={1.5} />
                   </div>
-                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Assistant IA Pédagogique 🎓</h2>
+                  <h2 className="text-xl font-bold text-gray-800 dark:text-gray-200">Assistant IA Pédagogique</h2>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 leading-relaxed">
                     Posez vos questions sur vos cours de <strong className="text-gray-800 dark:text-gray-200 font-bold">{selectedSubject?.nom}</strong>.
                     {selectedDoc ? (

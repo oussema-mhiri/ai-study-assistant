@@ -1,5 +1,5 @@
 // backend/src/services/emailService.js
-console.log('🟢 emailService.js chargé');
+console.log('emailService.js chargé');
 const nodemailer = require('nodemailer');
 
 // Cache pour réutiliser le même transporteur (Ethereal en dev, Gmail en prod)
@@ -18,7 +18,7 @@ const getTransporter = async () => {
 
   if (isProduction) {
     // --- MODE PRODUCTION : Gmail (SMTP) ---
-    console.log('📧 Utilisation de Gmail (production)');
+    console.log('Utilisation de Gmail (production)');
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
@@ -32,7 +32,7 @@ const getTransporter = async () => {
     return transporter;
   } else {
     // --- MODE DÉVELOPPEMENT : Ethereal ---
-    console.log('📧 Création d\'un compte Ethereal (développement)');
+    console.log('Création d\'un compte Ethereal (développement)');
     const testAccount = await nodemailer.createTestAccount();
     cachedAccount = testAccount;
     isEthereal = true;
@@ -56,7 +56,7 @@ const getTransporter = async () => {
 };
 
 exports.sendResetCodeEmail = async (toEmail, code) => {
-  console.log('📧 sendResetCodeEmail appelée !');
+  console.log('sendResetCodeEmail appelée !');
   console.log(`   Destinataire : ${toEmail}`);
   console.log(`   Code : ${code}`);
 
@@ -84,13 +84,13 @@ exports.sendResetCodeEmail = async (toEmail, code) => {
     // En mode développement, afficher le lien de visualisation Ethereal
     if (isEthereal) {
       const previewUrl = nodemailer.getTestMessageUrl(info);
-      console.log(`📬 Lien de visualisation : ${previewUrl}`);
+      console.log(`Lien de visualisation : ${previewUrl}`);
     }
 
-    console.log(`✅ Email envoyé à ${toEmail} : ${info.messageId}`);
+    console.log(`Email envoyé à ${toEmail} : ${info.messageId}`);
     return info;
   } catch (error) {
-    console.error('❌ Erreur sendResetCodeEmail:', error);
+    console.error('Erreur sendResetCodeEmail:', error);
     throw error;
   }
 };
@@ -108,13 +108,13 @@ exports.sendEmail = async ({ to, subject, html }) => {
 
     if (isEthereal) {
       const previewUrl = nodemailer.getTestMessageUrl(info);
-      console.log(`📬 Rappel email visualisable : ${previewUrl}`);
+      console.log(`Rappel email visualisable : ${previewUrl}`);
     }
 
-    console.log(`✅ Email envoyé à ${to} : ${info.messageId}`);
+    console.log(`Email envoyé à ${to} : ${info.messageId}`);
     return info;
   } catch (error) {
-    console.error('❌ Erreur sendEmail:', error);
+    console.error('Erreur sendEmail:', error);
     throw error;
   }
 };

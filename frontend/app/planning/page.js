@@ -26,6 +26,10 @@ const TYPE_CONFIG = {
   lecture:  { label: 'Lecture', color: 'bg-blue-500', light: 'bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300',     dot: 'bg-blue-500' },
   chatbot:  { label: 'Chatbot', color: 'bg-emerald-500', light: 'bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500' },
   revision: { label: 'Révision', color: 'bg-amber-500',  light: 'bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300', dot: 'bg-amber-500' },
+  resume:   { label: 'Résumé', color: 'bg-blue-500', light: 'bg-blue-100 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300', dot: 'bg-blue-500' },
+  flashcard:{ label: 'Flashcards', color: 'bg-violet-500', light: 'bg-violet-100 dark:bg-violet-950/30 text-violet-700 dark:text-violet-300', dot: 'bg-violet-500' },
+  exercices:{ label: 'Exercices', color: 'bg-emerald-500', light: 'bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300', dot: 'bg-emerald-500' },
+  vrai_faux:{ label: 'Vrai ou Faux', color: 'bg-rose-500', light: 'bg-rose-100 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300', dot: 'bg-rose-500' },
 };
 
 function getDaysInMonth(year, month) {
@@ -63,7 +67,7 @@ function CreateSessionModal({ subjects, selectedDate, onClose, onCreated }) {
         heureDebut: form.heureDebut,
       });
       onCreated(res.data);
-      toast.success('Session planifiée ! 📅');
+      toast.success('Session planifiée !');
       onClose();
     } catch (err) {
       toast.error('Erreur lors de la création');
@@ -584,14 +588,56 @@ function CalendarTab({ subjects }) {
 // ============================================
 // ONGLET 3 — PLANNING IA
 // ============================================
+const REVISION_TYPES = [
+  { key: 'chatbot', label: 'Chatbot IA', color: 'indigo' },
+  { key: 'resume', label: 'Résumé', color: 'blue' },
+  { key: 'flashcard', label: 'Flashcards', color: 'violet' },
+];
+
+const EXERCICE_TYPES = [
+  { key: 'exercices', label: 'Exercices', color: 'emerald' },
+  { key: 'qcm', label: 'QCM', color: 'amber' },
+  { key: 'vrai_faux', label: 'Vrai ou Faux', color: 'rose' },
+];
+
 function AIPlanningTab({ subjects }) {
   const [form, setForm] = useState({
     matiereId: subjects[0]?.id || '',
     dateExamen: '',
     disponibilitesMinutesParJour: 60,
+    revisionTypes: ['chatbot', 'resume', 'flashcard'],
+    exerciceTypes: ['exercices', 'qcm', 'vrai_faux'],
+    revisionMinutes: 30,
+    exerciceMinutes: 30,
   });
   const [loading, setLoading] = useState(false);
   const [aiPlanning, setAiPlanning] = useState(null);
+
+  const toggleRevisionType = (key) => {
+    setForm(f => {
+      const types = f.revisionTypes.includes(key)
+        ? f.revisionTypes.filter(t => t !== key)
+        : [...f.revisionTypes, key];
+      return { ...f, revisionTypes: types };
+    });
+  };
+
+  const toggleExerciceType = (key) => {
+    setForm(f => {
+      const types = f.exerciceTypes.includes(key)
+        ? f.exerciceTypes.filter(t => t !== key)
+        : [...f.exerciceTypes, key];
+      return { ...f, exerciceTypes: types };
+    });
+  };
+
+  const handleSplitSlider = (val) => {
+    const rev = parseInt(val) || 0;
+    setForm(f => {
+      const total = f.disponibilitesMinutesParJour || 60;
+      return { ...f, revisionMinutes: rev, exerciceMinutes: total - rev };
+    });
+  };
 
   const handleGenerate = async (e) => {
     e.preventDefault();
@@ -601,7 +647,7 @@ function AIPlanningTab({ subjects }) {
     try {
       const res = await api.post('/planning/generate', form);
       setAiPlanning(res.data);
-      toast.success('Planning généré et ajouté à votre calendrier ! 🤖');
+      toast.success('Planning généré et ajouté à votre calendrier !');
     } catch (err) {
       toast.error('Erreur lors de la génération');
     } finally {
@@ -644,12 +690,90 @@ function AIPlanningTab({ subjects }) {
             </label>
             <input type="range" min="30" max="300" step="15"
               value={form.disponibilitesMinutesParJour}
-              onChange={e => setForm(f => ({...f, disponibilitesMinutesParJour: parseInt(e.target.value)}))}
+              onChange={e => {
+                const total = parseInt(e.target.value) || 60;
+                setForm(f => {
+                  const rev = f.revisionMinutes || 0;
+                  const ex = f.exerciceMinutes || 0;
+                  const sum = rev + ex || 1;
+                  const revRatio = rev / sum;
+                  return {
+                    ...f,
+                    disponibilitesMinutesParJour: total,
+                    revisionMinutes: Math.round(total * revRatio),
+                    exerciceMinutes: Math.round(total * (1 - revRatio)),
+                  };
+                });
+              }}
               className="w-full accent-blue-600" />
             <div className="flex justify-between text-[10px] text-gray-400 dark:text-gray-500 font-medium mt-1">
               <span>30 min</span><span>5h</span>
             </div>
           </div>
+
+          {/* Activités de révision */}
+          <div>
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-2">Activités de révision</label>
+            <div className="flex flex-wrap gap-2">
+              {REVISION_TYPES.map(t => {
+                const active = form.revisionTypes.includes(t.key);
+                return (
+                  <button key={t.key} type="button" onClick={() => toggleRevisionType(t.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                      active
+                        ? 'bg-indigo-100 dark:bg-indigo-900/40 border-indigo-300 dark:border-indigo-600 text-indigo-700 dark:text-indigo-300'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                    }`}>
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Activités d'exercices */}
+          <div>
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-2">Activités d'exercices</label>
+            <div className="flex flex-wrap gap-2">
+              {EXERCICE_TYPES.map(t => {
+                const active = form.exerciceTypes.includes(t.key);
+                return (
+                  <button key={t.key} type="button" onClick={() => toggleExerciceType(t.key)}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all ${
+                      active
+                        ? 'bg-emerald-100 dark:bg-emerald-900/40 border-emerald-300 dark:border-emerald-600 text-emerald-700 dark:text-emerald-300'
+                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-500 dark:text-gray-400'
+                    }`}>
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Répartition du temps */}
+          <div className="bg-gray-50/60 dark:bg-gray-800/40 rounded-2xl p-4 border border-gray-100 dark:border-gray-700/50">
+            <label className="block text-xs font-bold text-gray-600 dark:text-gray-400 mb-3">Répartition du temps</label>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400">Révision</span>
+                <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{form.revisionMinutes} min</span>
+              </div>
+              <input type="range" min="0" max={form.disponibilitesMinutesParJour} step="5"
+                value={form.revisionMinutes}
+                onChange={e => handleSplitSlider(e.target.value)}
+                className="w-full accent-indigo-600 h-2" />
+              <div className="flex items-center justify-between">
+                <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">Exercices</span>
+                <span className="text-[11px] font-bold text-gray-700 dark:text-gray-300">{form.exerciceMinutes} min</span>
+              </div>
+              <div className="flex items-center justify-between text-[10px] text-gray-400 dark:text-gray-500 font-medium pt-1 border-t border-gray-200/50 dark:border-gray-700/30">
+                <span>Total : {form.revisionMinutes + form.exerciceMinutes} min</span>
+                <span>Dispo : {form.disponibilitesMinutesParJour} min</span>
+              </div>
+            </div>
+          </div>
+
           <button type="submit" disabled={loading}
             className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 text-white rounded-xl font-bold text-sm shadow-md shadow-indigo-200 dark:shadow-none hover:shadow-lg transition-all disabled:opacity-60 flex items-center justify-center gap-2">
             {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bot className="w-4 h-4" />}
@@ -788,9 +912,9 @@ export default function PlanningPage() {
                 </span>
               )}
             </Link>
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-blue-200 dark:shadow-none">
+            <Link href="/parametres" className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-blue-200 dark:shadow-none cursor-pointer hover:opacity-90 transition">
               {firstName[0]?.toUpperCase()}
-            </div>
+            </Link>
           </div>
         </div>
 

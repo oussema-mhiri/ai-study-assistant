@@ -39,7 +39,30 @@ const getOverview = async (req, res) => {
           FROM quiz_results qr2
           JOIN quizs q2 ON q2.id = qr2.quiz_id
           WHERE q2.matiere_id = m.id AND qr2.user_id = $1
-        ) AS quiz_success
+        ) AS quiz_success,
+        (
+          SELECT COUNT(*) FROM sessions_planning sp
+          WHERE sp.matiere_id = m.id AND sp.user_id = $1 AND sp.statut = 'complete'
+        ) AS completed_sessions,
+        (
+          SELECT COUNT(*) FROM sessions_planning sp
+          WHERE sp.matiere_id = m.id AND sp.user_id = $1
+        ) AS total_sessions,
+        ROUND(
+          (
+            COALESCE(
+              (SELECT ROUND(100.0 * SUM(CASE WHEN qr3.est_correct THEN 1 ELSE 0 END) / NULLIF(COUNT(qr3.id), 0), 1)
+               FROM quiz_results qr3 JOIN quizs q3 ON q3.id = qr3.quiz_id
+               WHERE q3.matiere_id = m.id AND qr3.user_id = $1), 0
+            ) * 0.4
+          )
+          + (CASE WHEN (SELECT COUNT(*) FROM documents d2 WHERE d2.matiere_id = m.id AND d2.user_id = $1) > 0 THEN 100 ELSE 0 END * 0.2)
+          + (CASE WHEN (SELECT COUNT(*) FROM flashcards f2 WHERE f2.matiere_id = m.id AND f2.user_id = $1) > 0 THEN 100 ELSE 0 END * 0.2)
+          + (COALESCE(100.0 *
+              (SELECT COUNT(*) FROM sessions_planning sp2 WHERE sp2.matiere_id = m.id AND sp2.user_id = $1 AND sp2.statut = 'complete')
+              / NULLIF((SELECT COUNT(*) FROM sessions_planning sp3 WHERE sp3.matiere_id = m.id AND sp3.user_id = $1), 0), 0
+            ) * 0.2)
+        , 0) AS score_maitrise
       FROM matieres m
       WHERE m.user_id = $1
       ORDER BY m.created_at DESC
