@@ -8,49 +8,58 @@ Ce projet a été réalisé dans le cadre d'un stage d'été de 2ème année au 
 Année universitaire : 2025 / 2026
 
 
-✨ Fonctionnalités principales
+## ✨ Fonctionnalités principales
 
-Authentification : JWT, Google OAuth, réinitialisation OTP (6 chiffres)
-Matières : CRUD, organisation des cours, couleur personnalisable, date d'examen
-Documents : Upload PDF/DOCX/PPTX/images, extraction texte, analyse IA
-IA (Gemini) : Résumés, points clés, définitions, analyse d'images, génération planning
-Quiz : QCM, Vrai/Faux, correction interactive (vert/rouge), score
-Exercices : QCM, Vrai/Faux, questions ouvertes, questions à trous, correction IA
-Flashcards : Génération IA, répétition espacée (SM-2), catégories
-Chatbot : Assistant contextuel, streaming SSE, suggestions intelligentes
-Planning : Calendrier hebdomadaire, génération IA, sessions planifiées
-Ressources : Recommandations IA (YouTube, Coursera, articles)
-Progression : Tableau de bord avec graphiques, statistiques, niveau adaptatif
-Notifications : Push + email, rappels examens (J-3, J-1), sessions du lendemain
-Paramètres : Profil, préférences IA, thème clair/sombre
-
-
-🛠️ Stack
-
-Frontend : React 19, Next.js 16, Tailwind CSS v4, Axios, Recharts
-Backend : Node.js, Express, JWT, Bcrypt, Nodemailer, Multer
-Base de données : PostgreSQL, pgAdmin
-IA : Gemini API (@google/generative-ai ^0.24.1)
-Outils : Git, GitHub, Postman, Docker
+| Module | Fonctionnalités |
+|--------|-----------------|
+| **Authentification** | JWT, Google OAuth, réinitialisation OTP (6 chiffres) |
+| **Matières** | CRUD, organisation des cours, couleur personnalisable, date d'examen |
+| **Documents** | Upload PDF/DOCX/PPTX/images, extraction texte, analyse IA |
+| **IA (Gemini)** | Résumés, points clés, définitions, analyse d'images, génération planning |
+| **Quiz** | QCM, Vrai/Faux, correction interactive (vert/rouge), score |
+| **Exercices** | QCM, Vrai/Faux, questions ouvertes, questions à trous, correction IA |
+| **Flashcards** | Génération IA, répétition espacée (SM-2), catégories |
+| **Chatbot** | Assistant contextuel, streaming SSE, suggestions intelligentes |
+| **Planning** | Calendrier hebdomadaire, génération IA, sessions planifiées |
+| **Ressources** | Recommandations IA (YouTube, Coursera, articles) |
+| **Progression** | Tableau de bord avec graphiques, statistiques, niveau adaptatif |
+| **Notifications** | Push + email, rappels examens (J-3, J-1), sessions du lendemain |
+| **Paramètres** | Profil, préférences IA, thème clair/sombre |
 
 
-📁 Structure rapide
+## 🛠️ Stack
 
+| Catégorie | Technologies |
+|-----------|--------------|
+| **Frontend** | React 19, Next.js 16, Tailwind CSS v4, Axios, Recharts |
+| **Backend** | Node.js, Express, JWT, Bcrypt, Nodemailer, Multer |
+| **Base de données** | PostgreSQL, pgAdmin |
+| **IA** | Gemini API (@google/generative-ai ^0.24.1) |
+| **Outils** | Git, GitHub, Postman, Docker |
+
+
+## 📁 Structure rapide
 backend/ → API REST (Node/Express)
 frontend/ → App Next.js (App Router)
 uploads/ → Fichiers importés
 
+text
 
-⚙️ Installation
 
+## ⚙️ Installation
+
+### 1. Cloner le dépôt
+
+```bash
 git clone https://github.com/oussema-mhiri/ai-study-assistant.git
 cd ai-study-assistant
-
-Backend :
-cd backend && npm install
-
+2. Backend
+bash
+cd backend
+npm install
 Créer un fichier .env :
 
+env
 PORT=5000
 DATABASE_URL=postgresql://postgres:admin123@localhost:5432/ai_study_assistant
 JWT_SECRET=super_secret_jwt_key
@@ -61,44 +70,81 @@ EMAIL_USER=votre_email@gmail.com
 EMAIL_APP_PASSWORD=votre_mot_de_passe
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000
+3. Frontend
+bash
+cd ../frontend
+npm install
+4. Lancer l'application
+bash
+# Backend (port 5000)
+npm run dev
 
-Frontend :
-cd ../frontend && npm install
-
-Lancer :
-npm run dev  # backend sur port 5000 / frontend sur port 3000
-
-
+# Frontend (port 3000)
+npm run dev
 🧪 API principales
-
-Auth (/api/auth) : POST /register | POST /login | POST /google | POST /request-reset-code | POST /verify-reset-code | POST /reset-password | GET /me
-
-Matières (/api/subjects) : GET / | POST / | PUT /:id | DELETE /:id
-
-Documents (/api/documents) : POST / | GET /:matiereId | DELETE /:id
-
-IA (/api/ai) : POST /analyze | GET /analysis/:documentId
-
-Quiz (/api/quizzes) : POST /generate | POST /generate-true-false
-
-Exercices (/api/exercises) : POST /generate | POST /check
-
-Flashcards (/api/flashcards) : POST /generate | GET /subject/:matiereId | GET /subject/:matiereId/due | POST /:id/review
-
-Chatbot (/api/chatbot) : POST /conversations/:id/chat | GET /subjects/:matiereId/suggestions
-
-Planning (/api/planning) : GET /sessions | POST /sessions | POST /generate | GET /notifications
-
-Progression (/api/progress) : GET /:matiereId | GET /adaptive-difficulty/:matiereId | POST /quiz-result
-
-Dashboard (/api/dashboard) : GET /overview
-
-Ressources (/api/resources) : GET /recommendations/:matiereId
-
-
+Authentification (/api/auth)
+Méthode	Endpoint	Description
+POST	/register	Inscription
+POST	/login	Connexion
+POST	/google	Google OAuth
+POST	/request-reset-code	Demande OTP
+POST	/verify-reset-code	Vérification OTP
+POST	/reset-password	Réinitialisation
+GET	/me	Profil utilisateur
+Matières (/api/subjects)
+Méthode	Endpoint	Description
+GET	/	Liste des matières
+POST	/	Créer une matière
+PUT	/:id	Modifier une matière
+DELETE	/:id	Supprimer une matière
+Documents (/api/documents)
+Méthode	Endpoint	Description
+POST	/	Upload fichier
+GET	/:matiereId	Liste par matière
+DELETE	/:id	Supprimer
+IA (/api/ai)
+Méthode	Endpoint	Description
+POST	/analyze	Analyse complète
+GET	/analysis/:documentId	Récupérer analyse
+Quiz (/api/quizzes)
+Méthode	Endpoint	Description
+POST	/generate	Générer QCM + Vrai/Faux
+POST	/generate-true-false	Générer Vrai/Faux
+Exercices (/api/exercises)
+Méthode	Endpoint	Description
+POST	/generate	Générer exercices
+POST	/check	Correction IA
+Flashcards (/api/flashcards)
+Méthode	Endpoint	Description
+POST	/generate	Générer flashcards
+GET	/subject/:matiereId	Liste par matière
+GET	/subject/:matiereId/due	Flashcards à réviser
+POST	/:id/review	Enregistrer révision
+Chatbot (/api/chatbot)
+Méthode	Endpoint	Description
+POST	/conversations/:id/chat	Envoyer message
+GET	/subjects/:matiereId/suggestions	Suggestions IA
+Planning (/api/planning)
+Méthode	Endpoint	Description
+GET	/sessions	Liste sessions
+POST	/sessions	Créer session
+POST	/generate	Génération IA
+GET	/notifications	Notifications
+Progression (/api/progress)
+Méthode	Endpoint	Description
+GET	/:matiereId	Progression par matière
+GET	/adaptive-difficulty/:matiereId	Niveau adaptatif
+POST	/quiz-result	Sauvegarder résultat
+Dashboard (/api/dashboard)
+Méthode	Endpoint	Description
+GET	/overview	Vue d'ensemble
+Ressources (/api/resources)
+Méthode	Endpoint	Description
+GET	/recommendations/:matiereId	Recommandations IA
 👨‍💻 Auteur
-
-Oussema Mhiri — stage d'été 2ème année, encadré par Mme Rania Wannes
+Oussema Mhiri — stage d'été 2ème année
+Encadré par Mme Rania Wannes — Mobelite
 
 📧 oussemamhiri963@gmail.com
-🔗 GitHub : https://github.com/oussema-mhiri/ai-study-assistant
+🔗 GitHub
+
