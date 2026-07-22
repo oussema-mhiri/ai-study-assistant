@@ -10,7 +10,7 @@ import {
   ChevronDown, ChevronLeft, ChevronRight, Loader2, Settings,
   Target, FileText, BookOpen, BarChart3, TrendingUp, CheckCircle,
   Award, Zap, Plus, Sparkles, GraduationCap, Clock, Trash2,
-  AlertCircle, Info, X, Send, Check, RotateCcw, Bot
+  AlertCircle, X, Check, RotateCcw, Bot
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';

@@ -62,19 +62,4 @@ function getInitialReview(quality) {
   }, quality);
 }
 
-/**
- * Retourne un label lisible pour la qualité
- */
-function getQualityLabel(quality) {
-  const labels = {
-    0: 'Encore',
-    1: 'Mauvais',
-    2: 'Difficile',
-    3: 'Bon',
-    4: 'Facile',
-    5: 'Très facile',
-  };
-  return labels[quality] || 'Inconnu';
-}
-
-module.exports = { calculateNextReview, getInitialReview, getQualityLabel };
+module.exports = { calculateNextReview, getInitialReview };

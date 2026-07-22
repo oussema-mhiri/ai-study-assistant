@@ -6,7 +6,7 @@ import api from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import {
   Bell, Settings, Clock, Mail, BellRing, CheckCircle,
-  BookOpen, Calendar, Loader2, Trash2, AlertTriangle, Brain
+  Calendar, Loader2, AlertTriangle
 } from 'lucide-react';
 
 function Toggle({ enabled, onChange, label }) {

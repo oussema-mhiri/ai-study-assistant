@@ -94,13 +94,7 @@ const Flashcard = {
     return res.rows[0];
   },
 
-  async deleteBySubject(userId, matiereId) {
-    const res = await pool.query(
-      'DELETE FROM flashcards WHERE user_id = $1 AND matiere_id = $2 RETURNING id',
-      [userId, matiereId]
-    );
-    return res.rowCount;
-  }
+
 };
 
 module.exports = Flashcard;

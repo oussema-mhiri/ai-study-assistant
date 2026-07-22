@@ -22,16 +22,7 @@ const ExerciseResult = {
     return saved;
   },
 
-  async getRecentResults(userId, matiereId, limit = 20) {
-    const res = await pool.query(
-      `SELECT * FROM exercise_results
-       WHERE user_id = $1 AND matiere_id = $2
-       ORDER BY answered_at DESC
-       LIMIT $3`,
-      [userId, matiereId, limit]
-    );
-    return res.rows;
-  },
+
 
   async getAdaptiveDifficulty(userId, matiereId) {
     const quizRes = await pool.query(
@@ -180,24 +171,7 @@ const ExerciseResult = {
     };
   },
 
-  async getHistory(userId, matiereId) {
-    const res = await pool.query(
-      `SELECT
-         exercise_type,
-         is_correct,
-         difficulty,
-         answered_at::date as date,
-         COUNT(*) as count,
-         SUM(CASE WHEN is_correct THEN 1 ELSE 0 END) as correct_count
-       FROM exercise_results
-       WHERE user_id = $1 AND matiere_id = $2
-       GROUP BY exercise_type, is_correct, difficulty, answered_at::date
-       ORDER BY date DESC
-       LIMIT 30`,
-      [userId, matiereId]
-    );
-    return res.rows;
-  }
+
 };
 
 module.exports = ExerciseResult;

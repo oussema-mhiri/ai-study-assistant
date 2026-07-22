@@ -1,5 +1,3 @@
-// backend/src/services/emailService.js
-console.log('emailService.js chargé');
 const nodemailer = require('nodemailer');
 
 // Cache pour réutiliser le même transporteur (Ethereal en dev, Gmail en prod)
@@ -56,10 +54,6 @@ const getTransporter = async () => {
 };
 
 exports.sendResetCodeEmail = async (toEmail, code) => {
-  console.log('sendResetCodeEmail appelée !');
-  console.log(`   Destinataire : ${toEmail}`);
-  console.log(`   Code : ${code}`);
-
   try {
     const transporter = await getTransporter();
 

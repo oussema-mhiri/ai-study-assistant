@@ -250,7 +250,6 @@ export default function DashboardPage() {
   };
 
   const matieres = data?.matieres || [];
-  const allMatieres = data?.matieres || [];
   const sessions = data?.upcomingSessions || [];
   const exams = data?.upcomingExams || [];
   const quizzes = data?.recentQuizzes || [];
@@ -477,7 +476,7 @@ export default function DashboardPage() {
         <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 border-t border-gray-100 pt-4 dark:text-gray-500 dark:border-gray-800">
           <Sparkles className="w-3 h-3 text-blue-500" />
           <span>Continuez votre progression !</span>
-          <span className="text-blue-600 font-medium">{allMatieres.length} matiere{allMatieres.length > 1 ? 's' : ''}</span>
+          <span className="text-blue-600 font-medium">{matieres.length} matiere{matieres.length > 1 ? 's' : ''}</span>
           <span>·</span>
           <span>{data?.totalDocuments || 0} documents</span>
           <span>·</span>

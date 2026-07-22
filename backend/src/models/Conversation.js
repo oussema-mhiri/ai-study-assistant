@@ -44,16 +44,7 @@ const Conversation = {
     return result.rows[0];
   },
 
-  updateTitle: async (id, userId, titre) => {
-    const query = `
-      UPDATE conversations
-      SET titre = $1, updated_at = CURRENT_TIMESTAMP
-      WHERE id = $2 AND user_id = $3
-      RETURNING id, user_id, matiere_id, titre, created_at, updated_at
-    `;
-    const result = await pool.query(query, [titre, id, userId]);
-    return result.rows[0];
-  }
+
 };
 
 module.exports = Conversation;

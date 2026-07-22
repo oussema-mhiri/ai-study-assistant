@@ -7,9 +7,9 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import {
-  Brain, Search, Plus, Send, Bot, Sparkles, History, Settings,
-  Bell, LogOut, Home, Layers, MessageSquare, CalendarDays,
-  ChevronDown, Loader2, User, Clock, BookOpen, Trash2, Paperclip, X, Info, Menu
+  Brain, Plus, Send, Bot, Sparkles,
+  Bell, Layers, MessageSquare,
+  ChevronDown, Loader2, BookOpen, Trash2, Paperclip, X, Info, Menu
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 
@@ -212,23 +212,6 @@ export default function ChatbotPage() {
     setImagePreview(null);
 
     await sendMessageStream(text, img);
-  };
-
-  // Réessayer le dernier message utilisateur après une erreur
-  const handleRetryLastMessage = async () => {
-    if (!activeConversation || !!streamingMessage) return;
-
-    // Trouver le dernier message utilisateur dans la liste
-    const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user');
-    if (!lastUserMsg) return;
-
-    // Retirer le dernier message d'erreur de l'IA
-    const lastErrMsg = [...messages].reverse().find(m => m.sender === 'ia' && m.id?.startsWith('temp-error'));
-    if (lastErrMsg) {
-      setMessages(prev => prev.filter(m => m.id !== lastErrMsg.id));
-    }
-
-    await sendMessageStream(lastUserMsg.content);
   };
 
   const handleKeyDown = (e) => {
@@ -566,7 +549,7 @@ export default function ChatbotPage() {
                         key={msg.id}
                         content={msg.content}
                         time={new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                        onRetry={String(msg.id).startsWith('temp-error') ? handleRetryLastMessage : null}
+                        onRetry={null}
                       />
                     )
                   )}

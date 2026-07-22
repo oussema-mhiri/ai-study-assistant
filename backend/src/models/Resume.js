@@ -30,16 +30,6 @@ const Resume = {
     return result.rows[0];
   },
 
-  deleteByDocumentId: async (documentId) => {
-    const query = `
-      DELETE FROM resumes
-      WHERE document_id = $1
-      RETURNING id
-    `;
-    const result = await pool.query(query, [documentId]);
-    return result.rows;
-  },
-
   delete: async (id) => {
     const query = `
       DELETE FROM resumes

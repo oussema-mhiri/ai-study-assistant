@@ -55,19 +55,7 @@ const Quiz = {
     return result.rows[0];
   },
 
-  findRecentByUser: async (userId, limit = 5) => {
-    const query = `
-      SELECT q.*, m.nom AS matiere_nom,
-             (SELECT COUNT(*) FROM questions WHERE quiz_id = q.id) AS questions_count
-      FROM quizs q
-      JOIN matieres m ON m.id = q.matiere_id
-      WHERE q.user_id = $1
-      ORDER BY q.created_at DESC
-      LIMIT $2
-    `;
-    const result = await pool.query(query, [userId, limit]);
-    return result.rows;
-  },
+
 };
 
 module.exports = Quiz;

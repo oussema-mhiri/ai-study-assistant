@@ -35,7 +35,6 @@ async function extractKeyPoints(text) {
   `;
   const result = await model.generateContent(prompt);
   const raw = result.response.text();
-  console.log('Réponse brute des points clés :', raw); // <-- LOG
 
   // Tente de parser même sans puces
   const lines = raw.split('\n').filter(line => line.trim().length > 0);
@@ -86,24 +85,7 @@ async function analyzeImage(imageBase64, prompt) {
   return result.response.text();
 }
 
-// --- Chatbot ---
-async function chatWithContext(question, context) {
-  const prompt = `
-    Tu es un assistant pédagogique. Utilise uniquement le contexte ci-dessous pour répondre.
-
-    ### Contexte :
-    ${context}
-
-    ### Question :
-    ${question}
-
-    ### Réponse :
-  `;
-  const result = await model.generateContent(prompt);
-  return result.response.text();
-}
-// backend/src/services/geminiService.js
-// backend/src/services/geminiService.js
+// --- Chatbot en Streaming ---
 async function generateQuizFromText(text, numQuestions = 5, difficulty = 'Moyen') {
   const prompt = `
     Tu es un professeur. Génère un quiz de ${numQuestions} questions basé sur le texte suivant.
@@ -400,34 +382,6 @@ async function generateFlashcardsFromText(text, numCards = 10) {
   }
 }
 
-async function checkExerciseAnswer(question, userAnswer, correctAnswer) {
-  const prompt = `
-    Tu es un professeur. Voici un exercice, la réponse correcte, et la réponse proposée par l'étudiant.
-    Détermine si la réponse de l'étudiant est correcte (ou suffisamment proche) et renvoie un objet JSON avec les champs :
-    - isCorrect: boolean (true si la réponse est correcte, false sinon)
-    - feedback: string (un retour court pour l'étudiant, expliquant pourquoi c'est juste ou faux)
-    - correctAnswer: string (réponse correcte, au cas où l'étudiant voudrait la voir)
-
-    Exercice: ${question}
-    Réponse correcte: ${correctAnswer}
-    Réponse de l'étudiant: ${userAnswer}
-
-    Réponse (uniquement le JSON) :
-  `;
-  const result = await model.generateContent(prompt);
-  const raw = result.response.text();
-  try {
-    const json = JSON.parse(raw);
-    return json;
-  } catch (error) {
-    console.error('Erreur parsing JSON de vérification:', error);
-    return {
-      isCorrect: false,
-      feedback: "Erreur lors de la vérification, veuillez réessayer.",
-      correctAnswer: correctAnswer
-    };
-  }
-}
 // --- Chatbot en Streaming ---
 async function chatWithContextStream(question, context, history = [], imageBase64 = null) {
   const formattedHistory = history.length > 0
@@ -532,7 +486,6 @@ module.exports = {
   extractKeyPoints,
   extractDefinitions,
   analyzeImage,
-  chatWithContext,
   chatWithContextStream,
   generateQuizFromText,
   generateTrueFalseFromText,

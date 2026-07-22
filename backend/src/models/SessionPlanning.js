@@ -27,19 +27,6 @@ const SessionPlanning = {
     return result.rows;
   },
 
-  // Sessions d'une matière
-  findByMatiere: async (userId, matiereId) => {
-    const query = `
-      SELECT sp.*, m.nom AS matiere_nom, m.couleur AS matiere_couleur
-      FROM sessions_planning sp
-      JOIN matieres m ON m.id = sp.matiere_id
-      WHERE sp.user_id = $1 AND sp.matiere_id = $2
-      ORDER BY sp.date_session ASC
-    `;
-    const result = await pool.query(query, [userId, matiereId]);
-    return result.rows;
-  },
-
   // Mettre à jour le statut ou les détails d'une session
   update: async (id, userId, updates) => {
     const { statut, titre, dateSession, heureDebut, dureeMinutes, type } = updates;
