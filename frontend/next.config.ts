@@ -1,8 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   turbopack: {
-    root: __dirname, // Définit la racine sur le dossier 'frontend'
+    root: __dirname,
   },
 };
 

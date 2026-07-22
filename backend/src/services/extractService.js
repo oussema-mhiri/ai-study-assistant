@@ -58,7 +58,8 @@ async function extractTextFromPPTX(filePath) {
  */
 async function extractTextFromFile(filePath, mimeType) {
   try {
-    const buffer = fs.readFileSync(filePath);
+    const normalizedPath = filePath.replace(/\\/g, '/');
+    const buffer = fs.readFileSync(normalizedPath);
 
     // PDF
     if (mimeType === 'application/pdf') {
@@ -74,7 +75,7 @@ async function extractTextFromFile(filePath, mimeType) {
 
     // PPTX
     if (mimeType === 'application/vnd.openxmlformats-officedocument.presentationml.presentation') {
-      return await extractTextFromPPTX(filePath);
+      return await extractTextFromPPTX(normalizedPath);
     }
 
     // Images

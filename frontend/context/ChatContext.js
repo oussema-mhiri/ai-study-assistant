@@ -138,7 +138,7 @@ export function ChatProvider({ children }) {
     try {
       const token = localStorage.getItem('token');
       console.log('[Chat] Fetch en cours...');
-      const response = await fetch(`http://localhost:5000/api/chatbot/conversations/${activeConversation.id}/chat`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api'}/chatbot/conversations/${activeConversation.id}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
