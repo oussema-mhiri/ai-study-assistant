@@ -36,6 +36,16 @@ const Question = {
     return result.rows;
   },
 
+  findByQuizId: async (quizId) => {
+    const query = `
+      SELECT * FROM questions
+      WHERE quiz_id = $1
+      ORDER BY id ASC
+    `;
+    const result = await pool.query(query, [quizId]);
+    return result.rows;
+  },
+
   delete: async (id) => {
     const query = `
       DELETE FROM questions
@@ -44,6 +54,16 @@ const Question = {
     `;
     const result = await pool.query(query, [id]);
     return result.rows[0];
+  },
+
+  deleteByQuizId: async (quizId) => {
+    const query = `
+      DELETE FROM questions
+      WHERE quiz_id = $1
+      RETURNING id
+    `;
+    const result = await pool.query(query, [quizId]);
+    return result.rows;
   },
 
   update: async (id, { contenu, type, bonneReponse, options }) => {

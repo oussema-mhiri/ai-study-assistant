@@ -44,7 +44,21 @@ const QuizResult = {
     return result.rows[0];
   },
 
-
+  // Stats pour un quiz spécifique
+  getStatsByQuiz: async (userId, quizId) => {
+    const query = `
+      SELECT
+        COUNT(qr.id) AS total_reponses,
+        SUM(CASE WHEN qr.est_correct THEN 1 ELSE 0 END) AS correctes,
+        ROUND(
+          100.0 * SUM(CASE WHEN qr.est_correct THEN 1 ELSE 0 END) / NULLIF(COUNT(qr.id), 0)
+        , 1) AS taux_reussite
+      FROM quiz_results qr
+      WHERE qr.user_id = $1 AND qr.quiz_id = $2
+    `;
+    const result = await pool.query(query, [userId, quizId]);
+    return result.rows[0];
+  },
 };
 
 module.exports = QuizResult;

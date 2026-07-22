@@ -150,6 +150,7 @@ exports.chatStream = async (req, res) => {
 
     let stream;
     try {
+      console.log('[Chatbot] Appel chatWithContextStream pour conversation #' + conversation.id);
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Délai d\'attente dépassé lors de la connexion à l\'IA. Vérifiez votre clé API Gemini.')), GEMINI_TIMEOUT_MS)
       );
@@ -157,6 +158,7 @@ exports.chatStream = async (req, res) => {
         chatWithContextStream(message, context, history, imageBase64),
         timeoutPromise
       ]);
+      console.log('[Chatbot] Stream Gemini obtenu avec succès');
     } catch (geminiError) {
       console.error('[Chatbot] Erreur initialisation Gemini:', geminiError.message);
       if (!res.writableEnded) {

@@ -29,7 +29,15 @@ const FlashcardReview = {
     return res.rows[0];
   },
 
-
+  async getHistory(userId, flashcardId) {
+    const res = await pool.query(
+      `SELECT * FROM flashcard_reviews
+       WHERE user_id = $1 AND flashcard_id = $2
+       ORDER BY last_review DESC`,
+      [userId, flashcardId]
+    );
+    return res.rows;
+  }
 };
 
 module.exports = FlashcardReview;

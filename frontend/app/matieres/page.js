@@ -6,8 +6,8 @@ import Link from 'next/link';
 import api from '@/lib/api';
 import Sidebar from '@/components/Sidebar';
 import {
-  Brain, Plus, Upload, FileText, Sparkles, X, Loader2,
-  BookOpen, Bell, Settings, Layers,
+  Brain, Search, Plus, Upload, FileText, Sparkles, ChevronRight, X, Loader2,
+  BookOpen, Bot, CalendarDays, Bell, Settings, LogOut, Home, Layers, MessageSquare,
   Award, Zap, CheckCircle, ClipboardList, PenTool, ListChecks, AlertCircle,
   Eye, Trash2, Clock, FileCheck, RotateCcw, FlipVertical, ToggleLeft, Play, ExternalLink
 } from 'lucide-react';

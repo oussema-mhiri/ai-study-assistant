@@ -60,13 +60,23 @@ const User = {
     return result.rows[0];
   },
 
-  // Enregistrer un code de réinitialisation (OTP 6 chiffres)
-  setResetCode: async (userId, plainCode, expiresAt) => {
+  // Enregistrer un token de réinitialisation de mot de passe (hashé) + sa date d'expiration
+  setResetToken: async (userId, hashedToken, expiresAt) => {
     const query = `
       UPDATE users SET reset_token = $1, reset_token_expires = $2, updated_at = CURRENT_TIMESTAMP
       WHERE id = $3
     `;
-    await pool.query(query, [plainCode, expiresAt, userId]);
+    await pool.query(query, [hashedToken, expiresAt, userId]);
+  },
+
+  // Trouver un utilisateur par son token de reset (hashé), uniquement s'il n'est pas expiré
+  findByValidResetToken: async (hashedToken) => {
+    const query = `
+      SELECT * FROM users
+      WHERE reset_token = $1 AND reset_token_expires > NOW()
+    `;
+    const result = await pool.query(query, [hashedToken]);
+    return result.rows[0];
   },
 
   // Mettre à jour le mot de passe et effacer le token de reset
@@ -77,6 +87,38 @@ const User = {
       WHERE id = $2
     `;
     await pool.query(query, [newPasswordHash, userId]);
+  },
+
+  // =================================================
+  // NOUVELLES FONCTIONS POUR LE CODE OTP (6 chiffres)
+  // =================================================
+
+  // Enregistrer un code de réinitialisation (stocké en clair car c'est un code court)
+  setResetCode: async (userId, plainCode, expiresAt) => {
+    const query = `
+      UPDATE users SET reset_token = $1, reset_token_expires = $2, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $3
+    `;
+    await pool.query(query, [plainCode, expiresAt, userId]);
+  },
+
+  // Trouver un utilisateur par code VALIDE (non expiré)
+  findByValidResetCode: async (plainCode) => {
+    const query = `
+      SELECT * FROM users
+      WHERE reset_token = $1 AND reset_token_expires > NOW()
+    `;
+    const result = await pool.query(query, [plainCode]);
+    return result.rows[0];
+  },
+
+  // Effacer le code après réinitialisation
+  clearResetCode: async (userId) => {
+    const query = `
+      UPDATE users SET reset_token = NULL, reset_token_expires = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+    `;
+    await pool.query(query, [userId]);
   },
 
   // Mettre à jour le profil (université, faculté, niveau, filière)

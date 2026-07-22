@@ -46,7 +46,19 @@ const Document = {
     return result.rows[0];
   },
 
-
+  // Récupérer les documents d'un utilisateur (pour dashboard)
+  findAllByUser: async (userId) => {
+    const query = `
+      SELECT d.*, m.nom AS matiere_nom
+      FROM documents d
+      JOIN matieres m ON m.id = d.matiere_id
+      WHERE d.user_id = $1
+      ORDER BY d.uploaded_at DESC
+      LIMIT 10
+    `;
+    const result = await pool.query(query, [userId]);
+    return result.rows;
+  },
 };
 
 module.exports = Document;
