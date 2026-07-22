@@ -69,14 +69,15 @@ function UserMessage({ content, time }) {
   );
 }
 
-function AssistantMessage({ content, time, isStreaming }) {
+function AssistantMessage({ content, time, isStreaming, onRetry }) {
+  const isError = content && content.includes("Désolé, je n'ai pas pu obtenir de réponse");
   return (
     <div className="flex items-start gap-3 mb-4 animate-fade-in-up">
       <div className="w-8.5 h-8.5 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-sm shadow-blue-200 flex-shrink-0 mt-1">
         <Brain className="w-4 h-4 text-white" strokeWidth={2} />
       </div>
       <div className="max-w-[75%] bg-white dark:bg-gray-900 border border-gray-200/50 dark:border-gray-700/50 rounded-3xl rounded-tl-sm px-5 py-3.5 shadow-sm hover:shadow-md transition-shadow">
-        <div className="text-gray-700 dark:text-gray-300 text-sm leading-relaxed">
+        <div className={`text-sm leading-relaxed ${isError ? 'text-red-600 dark:text-red-400' : 'text-gray-700 dark:text-gray-300'}`}>
           {content === '...' ? (
             <div className="flex items-center gap-1.5 py-2 px-1">
               <span className="w-2.5 h-2.5 bg-blue-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
@@ -87,6 +88,14 @@ function AssistantMessage({ content, time, isStreaming }) {
             formatMarkdown(content)
           )}
         </div>
+        {isError && onRetry && (
+          <button
+            onClick={onRetry}
+            className="mt-2 px-3 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+          >
+            Réessayer
+          </button>
+        )}
         <div className="flex items-center justify-between mt-2.5 pt-2 border-t border-gray-100/50 dark:border-gray-700/50 text-[10px] text-gray-400 dark:text-gray-500 font-medium">
           <span>{time}</span>
           {isStreaming && (
@@ -203,6 +212,23 @@ export default function ChatbotPage() {
     setImagePreview(null);
 
     await sendMessageStream(text, img);
+  };
+
+  // Réessayer le dernier message utilisateur après une erreur
+  const handleRetryLastMessage = async () => {
+    if (!activeConversation || !!streamingMessage) return;
+
+    // Trouver le dernier message utilisateur dans la liste
+    const lastUserMsg = [...messages].reverse().find(m => m.sender === 'user');
+    if (!lastUserMsg) return;
+
+    // Retirer le dernier message d'erreur de l'IA
+    const lastErrMsg = [...messages].reverse().find(m => m.sender === 'ia' && m.id?.startsWith('temp-error'));
+    if (lastErrMsg) {
+      setMessages(prev => prev.filter(m => m.id !== lastErrMsg.id));
+    }
+
+    await sendMessageStream(lastUserMsg.content);
   };
 
   const handleKeyDown = (e) => {
@@ -540,6 +566,7 @@ export default function ChatbotPage() {
                         key={msg.id}
                         content={msg.content}
                         time={new Date(msg.created_at).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                        onRetry={String(msg.id).startsWith('temp-error') ? handleRetryLastMessage : null}
                       />
                     )
                   )}

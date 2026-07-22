@@ -150,7 +150,7 @@ const createTables = async () => {
       id SERIAL PRIMARY KEY,
       user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
       matiere_id INTEGER REFERENCES matieres(id) ON DELETE CASCADE,
-      document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+      document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL,
       titre VARCHAR(255) NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -233,7 +233,7 @@ const createTables = async () => {
     ALTER TABLE users ADD COLUMN IF NOT EXISTS reset_token_expires TIMESTAMP;
     ALTER TABLE users ADD COLUMN IF NOT EXISTS ia_level VARCHAR(20) DEFAULT 'Moyen';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS response_mode VARCHAR(20) DEFAULT 'Détaillé';
-    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE;
+    ALTER TABLE conversations ADD COLUMN IF NOT EXISTS document_id INTEGER REFERENCES documents(id) ON DELETE SET NULL;
     ALTER TABLE matieres ADD COLUMN IF NOT EXISTS date_examen DATE;
     ALTER TABLE matieres ADD COLUMN IF NOT EXISTS couleur VARCHAR(20) DEFAULT '#3B82F6';
     ALTER TABLE users ADD COLUMN IF NOT EXISTS notif_push BOOLEAN DEFAULT true;

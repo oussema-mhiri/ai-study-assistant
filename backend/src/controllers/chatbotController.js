@@ -139,26 +139,85 @@ exports.chatStream = async (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no'); // Désactiver le buffering proxy/nginx
 
     // Envoyer un événement de début de flux
     res.write(`data: ${JSON.stringify({ event: 'start' })}\n\n`);
 
-    // 6. Lancer le flux Gemini
-    const stream = await chatWithContextStream(message, context, history, imageBase64);
-    let fullResponseText = '';
+    // 6. Lancer le flux Gemini avec timeout garanti AVANT l'appel
+    const GEMINI_TIMEOUT_MS = 30000; // 30 secondes max pour obtenir le stream
+    const STREAM_TIMEOUT_MS = 60000; // 60 secondes max pour le streaming complet
 
-    for await (const chunk of stream) {
-      const chunkText = chunk.text();
-      fullResponseText += chunkText;
-      res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+    let stream;
+    try {
+      console.log('[Chatbot] Appel chatWithContextStream pour conversation #' + conversation.id);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Délai d\'attente dépassé lors de la connexion à l\'IA. Vérifiez votre clé API Gemini.')), GEMINI_TIMEOUT_MS)
+      );
+      stream = await Promise.race([
+        chatWithContextStream(message, context, history, imageBase64),
+        timeoutPromise
+      ]);
+      console.log('[Chatbot] Stream Gemini obtenu avec succès');
+    } catch (geminiError) {
+      console.error('[Chatbot] Erreur initialisation Gemini:', geminiError.message);
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ error: geminiError.message || 'Erreur lors de la connexion à l\'IA' })}\n\n`);
+        res.end();
+      }
+      return;
     }
 
-    // 7. Enregistrer le message complet de l'IA en base de données
-    await Message.create(conversation.id, 'ia', fullResponseText);
+    let fullResponseText = '';
 
-    // Mettre à jour la date de modification de la conversation
-    const pool = require('../config/db');
-    await pool.query('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [conversation.id]);
+    // Timeout de sécurité sur le streaming lui-même
+    let streamTimedOut = false;
+    const streamTimeout = setTimeout(() => {
+      streamTimedOut = true;
+      if (!res.writableEnded) {
+        console.error('[Chatbot] Timeout du stream Gemini (60s)');
+        res.write(`data: ${JSON.stringify({ error: 'L\'IA met trop de temps à répondre. Réessayez.' })}\n\n`);
+        res.end();
+      }
+    }, STREAM_TIMEOUT_MS);
+
+    try {
+      for await (const chunk of stream) {
+        if (streamTimedOut) break;
+        const chunkText = chunk.text();
+        fullResponseText += chunkText;
+        res.write(`data: ${JSON.stringify({ text: chunkText })}\n\n`);
+      }
+
+      clearTimeout(streamTimeout);
+
+      if (!fullResponseText && !streamTimedOut) {
+        console.warn('[Chatbot] Stream Gemini terminé sans contenu');
+        if (!res.writableEnded) {
+          res.write(`data: ${JSON.stringify({ error: 'L\'IA n\'a renvoyé aucune réponse. Réessayez.' })}\n\n`);
+          res.end();
+        }
+        return;
+      }
+
+      // 7. Enregistrer le message complet de l'IA en base de données
+      await Message.create(conversation.id, 'ia', fullResponseText);
+
+      // Mettre à jour la date de modification de la conversation
+      const pool = require('../config/db');
+      await pool.query('UPDATE conversations SET updated_at = CURRENT_TIMESTAMP WHERE id = $1', [conversation.id]);
+    } catch (streamError) {
+      clearTimeout(streamTimeout);
+      console.error('[Chatbot] Erreur pendant le stream Gemini:', streamError.message);
+      if (fullResponseText) {
+        await Message.create(conversation.id, 'ia', fullResponseText);
+      }
+      if (!res.writableEnded) {
+        res.write(`data: ${JSON.stringify({ error: streamError.message || 'Erreur pendant la génération de la réponse' })}\n\n`);
+        res.end();
+      }
+      return;
+    }
 
     // Envoyer l'événement de fin de flux
     res.write(`data: ${JSON.stringify({ event: 'done', fullResponse: fullResponseText })}\n\n`);
@@ -169,7 +228,7 @@ exports.chatStream = async (req, res) => {
     // Tenter d'envoyer l'erreur en SSE si la connexion est déjà établie
     if (!res.headersSent) {
       res.status(500).json({ message: 'Erreur serveur lors de la discussion' });
-    } else {
+    } else if (!res.writableEnded) {
       res.write(`data: ${JSON.stringify({ error: error.message || 'Une erreur est survenue' })}\n\n`);
       res.end();
     }

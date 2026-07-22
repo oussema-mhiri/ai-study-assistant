@@ -116,6 +116,8 @@ export function ChatProvider({ children }) {
   const sendMessageStream = async (messageText, imageBase64 = null) => {
     if (!activeConversation) return;
 
+    console.log('[Chat] Envoi message pour conversation #' + activeConversation.id);
+
     // 1. Ajouter le message de l'utilisateur de manière optimiste dans l'interface
     const userMsg = {
       id: `temp-user-${Date.now()}`,
@@ -126,19 +128,31 @@ export function ChatProvider({ children }) {
     setMessages(prev => [...prev, userMsg]);
     setStreamingMessage('...'); // Indicateur d'écriture
 
+    // Timeout frontend : si le fetch ne résout pas en 45 secondes, on annule tout
+    const abortController = new AbortController();
+    const fetchTimeout = setTimeout(() => {
+      console.warn('[Chat] Timeout fetch (45s) - annulation');
+      abortController.abort();
+    }, 45000);
+
     try {
       const token = localStorage.getItem('token');
+      console.log('[Chat] Fetch en cours...');
       const response = await fetch(`http://localhost:5000/api/chatbot/conversations/${activeConversation.id}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ message: messageText, imageBase64 })
+        body: JSON.stringify({ message: messageText, imageBase64 }),
+        signal: abortController.signal
       });
 
+      clearTimeout(fetchTimeout);
+      console.log('[Chat] Fetch terminé, status:', response.status);
+
       if (!response.ok) {
-        throw new Error('Erreur HTTP de chatStream');
+        throw new Error(`Erreur HTTP ${response.status}`);
       }
 
       // 2. Traiter le flux SSE
@@ -146,74 +160,141 @@ export function ChatProvider({ children }) {
       const decoder = new TextDecoder('utf-8');
       let finished = false;
       let accumulatedText = '';
+      let lineBuffer = '';
+      let lastActivityTime = Date.now();
+      const ACTIVITY_TIMEOUT_MS = 30000; // 30s sans données = timeout
 
       // Vider le streamingMessage de départ "..."
       setStreamingMessage('');
 
       while (!finished) {
+        // Vérifier le timeout d'activité
+        if (Date.now() - lastActivityTime > ACTIVITY_TIMEOUT_MS) {
+          console.warn('[Chat] Timeout activité stream (30s sans données)');
+          throw new Error('Le serveur ne répond plus. Réessayez.');
+        }
+
         const { value, done } = await reader.read();
         if (done) {
+          console.log('[Chat] Stream terminé (done=true)');
           finished = true;
           break;
         }
 
+        lastActivityTime = Date.now();
         const chunk = decoder.decode(value, { stream: true });
-        // Séparer les lignes par double saut de ligne standard dans SSE
-        const lines = chunk.split('\n');
+        lineBuffer += chunk;
 
-        for (const line of lines) {
+        const parts = lineBuffer.split('\n');
+        lineBuffer = parts.pop() || '';
+
+        for (const line of parts) {
           const trimmed = line.trim();
-          if (trimmed.startsWith('data: ')) {
-            const dataStr = trimmed.slice(6).trim();
-            
+          if (!trimmed.startsWith('data: ')) continue;
+
+          const dataStr = trimmed.slice(6).trim();
+          if (!dataStr) continue;
+
+          // Détection d'erreur SSE AVANT le JSON.parse pour ne pas l'avaler
+          if (dataStr.includes('"error"')) {
             try {
               const parsed = JSON.parse(dataStr);
-              
-              if (parsed.event === 'done') {
-                finished = true;
-                // Message IA finalisé
-                const iaMsg = {
-                  id: `temp-ia-${Date.now()}`,
-                  sender: 'ia',
-                  content: parsed.fullResponse || accumulatedText,
-                  created_at: new Date().toISOString()
-                };
-                setMessages(prev => [...prev, iaMsg]);
-                setStreamingMessage('');
-                break;
-              } else if (parsed.event === 'start') {
-                // Début
-              } else if (parsed.text) {
-                accumulatedText += parsed.text;
-                setStreamingMessage(accumulatedText);
-              } else if (parsed.error) {
+              if (parsed.error) {
+                console.error('[Chat] Erreur SSE reçue:', parsed.error);
                 throw new Error(parsed.error);
               }
-            } catch (jsonErr) {
-              // Parfois, les chunks peuvent être tronqués si le tampon TCP est divisé. 
-              // Ce bloc évite le crash du client si une ligne incomplète est reçue.
+            } catch (parseErr) {
+              if (parseErr.message && !parseErr.message.includes('Unexpected token') && !parseErr.message.includes('Unexpected end')) {
+                throw parseErr;
+              }
+            }
+          }
+
+          try {
+            const parsed = JSON.parse(dataStr);
+
+            if (parsed.event === 'done') {
+              console.log('[Chat] Événement done reçu');
+              finished = true;
+              const iaMsg = {
+                id: `temp-ia-${Date.now()}`,
+                sender: 'ia',
+                content: parsed.fullResponse || accumulatedText,
+                created_at: new Date().toISOString()
+              };
+              setMessages(prev => [...prev, iaMsg]);
+              setStreamingMessage('');
+              break;
+            } else if (parsed.event === 'start') {
+              console.log('[Chat] Événement start reçu');
+            } else if (parsed.text) {
+              accumulatedText += parsed.text;
+              setStreamingMessage(accumulatedText);
+            } else if (parsed.error) {
+              console.error('[Chat] Erreur SSE dans parse:', parsed.error);
+              throw new Error(parsed.error);
+            }
+          } catch (jsonErr) {
+            if (jsonErr.message && !jsonErr.message.includes('Unexpected token') && !jsonErr.message.includes('Unexpected end')) {
+              throw jsonErr;
             }
           }
         }
       }
 
-      // Recharger les conversations en tâche de fond pour mettre à jour la date d'activité (updated_at)
+      // Traiter le reste du buffer
+      if (lineBuffer.trim().startsWith('data: ')) {
+        const dataStr = lineBuffer.trim().slice(6).trim();
+        if (dataStr) {
+          try {
+            const parsed = JSON.parse(dataStr);
+            if (parsed.event === 'done' && !finished) {
+              const iaMsg = {
+                id: `temp-ia-${Date.now()}`,
+                sender: 'ia',
+                content: parsed.fullResponse || accumulatedText,
+                created_at: new Date().toISOString()
+              };
+              setMessages(prev => [...prev, iaMsg]);
+              setStreamingMessage('');
+            }
+          } catch (e) { /* buffer tronqué */ }
+        }
+      }
+
+      // Si le stream se termine sans event 'done'
+      if (accumulatedText && !finished) {
+        const iaMsg = {
+          id: `temp-ia-${Date.now()}`,
+          sender: 'ia',
+          content: accumulatedText,
+          created_at: new Date().toISOString()
+        };
+        setMessages(prev => [...prev, iaMsg]);
+      }
+
+      // Recharger les conversations en tâche de fond
       api.get(`/chatbot/subjects/${activeConversation.matiere_id}/conversations`)
         .then(res => setConversations(res.data))
         .catch(console.error);
 
     } catch (error) {
-      console.error('Erreur streaming chatbot:', error);
-      toast.error('Erreur lors de la communication avec l\'IA');
-      // Retirer l'indicateur d'écriture en cas d'erreur
-      setStreamingMessage('');
-      // Ajouter un message d'erreur dans le chat
+      console.error('[Chat] Erreur streaming chatbot:', error.message || error);
+      const isAbort = error.name === 'AbortError';
+      toast.error(isAbort ? 'Le serveur met trop de temps à répondre.' : 'Erreur lors de la communication avec l\'IA');
       setMessages(prev => [...prev, {
         id: `temp-error-${Date.now()}`,
         sender: 'ia',
-        content: "Désolé, je n'ai pas pu obtenir de réponse de l'IA. Veuillez vérifier vos documents ou réessayer plus tard.",
+        content: isAbort
+          ? "Le serveur met trop de temps à répondre. Vérifiez que le backend est démarré et que votre clé API Gemini est valide."
+          : "Désolé, je n'ai pas pu obtenir de réponse de l'IA. Veuillez vérifier vos documents ou réessayer plus tard.",
         created_at: new Date().toISOString()
       }]);
+    } finally {
+      // GARANTIE : streamingMessage est TOUJOURS vidé, même si une erreur non catchée se produit
+      clearTimeout(fetchTimeout);
+      setStreamingMessage('');
+      console.log('[Chat] streamingMessage nettoyé (finally)');
     }
   };
 
