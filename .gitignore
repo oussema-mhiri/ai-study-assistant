@@ -24,3 +24,14 @@ Thumbs.db
 
 # Fichiers utilisateur
 *.sqlite
+
+# Rapports
+*.docx
+PROJECT_REPORT.md
+reports/
+
+# Postman
+.postman/
+
+# Docker
+uploads/
