@@ -136,3 +136,41 @@ html, body {
 .dark ::-webkit-scrollbar-thumb {
   background: #475569;
 }
+
+/* Input text color — light mode */
+input:not([type="checkbox"]):not([type="radio"]) {
+  color: #000000;
+  -webkit-text-fill-color: #000000;
+}
+
+/* Input text color — dark mode */
+.dark input:not([type="checkbox"]):not([type="radio"]) {
+  color: #f3f4f6;
+  -webkit-text-fill-color: #f3f4f6;
+}
+
+/* Autofill — light mode */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #000000 !important;
+  box-shadow: 0 0 0 1000px white inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Autofill — dark mode */
+.dark input:-webkit-autofill,
+.dark input:-webkit-autofill:hover,
+.dark input:-webkit-autofill:focus,
+.dark input:-webkit-autofill:active {
+  -webkit-text-fill-color: #f3f4f6 !important;
+  box-shadow: 0 0 0 1000px #1f2937 inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* Placeholders — always gray regardless of mode */
+::placeholder {
+  color: #9ca3af !important;
+  -webkit-text-fill-color: #9ca3af !important;
+}

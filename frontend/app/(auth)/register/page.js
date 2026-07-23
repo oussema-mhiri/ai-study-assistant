@@ -50,7 +50,7 @@ export default function RegisterPage() {
           type={type}
           placeholder={placeholder}
           onChange={handleChange}
-          className="w-full pl-9 pr-3 py-2.5 text-sm text-gray-900 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition duration-200"
+          className="w-full pl-9 pr-3 py-2.5 text-sm text-black border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition duration-200"
           required={name === 'fullName' || name === 'email' || name === 'password'}
         />
       </div>

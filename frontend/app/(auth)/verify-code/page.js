@@ -72,7 +72,7 @@ function VerifyCodeContent() {
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
                 maxLength={6}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition text-center tracking-[4px] sm:tracking-[6px] md:tracking-[10px] font-bold text-base sm:text-lg overflow-hidden"
+                className="w-full pl-10 pr-4 py-3 text-black border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition text-center tracking-[4px] sm:tracking-[6px] md:tracking-[10px] font-bold text-base sm:text-lg overflow-hidden"
                 required
               />
             </div>
