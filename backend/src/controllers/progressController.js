@@ -78,11 +78,26 @@ const getProgress = async (req, res) => {
     );
     const flashStats = flashRes.rows[0];
 
-    // 8. Calcul du score de maîtrise (pondéré — cahier des charges)
-    const docsScore = Math.min(documents.length * 10, 30); // max 30 pts
-    const quizScore = Math.min(parseFloat(quizStats?.taux_reussite || 0) * 0.5, 50); // max 50 pts
-    const chatScore = Math.min(parseInt(chatStats.total_conversations) * 5, 20); // max 20 pts
-    const scoreMaitrise = Math.round(Math.min(docsScore + quizScore + chatScore, 100));
+    // 8. Calcul du score de maîtrise (pondéré — basé sur l'activité réelle)
+    const quizScore = Math.min(parseFloat(quizStats?.taux_reussite || 0) * 0.30, 30);
+    const nbFlashcards = parseInt(flashStats.total_flashcards) || 0;
+    const nbReviews = parseInt(flashStats.total_reviews) || 0;
+    const avgQuality = parseFloat(flashStats.avg_efficacite) || 0;
+    const flashRatio = nbFlashcards > 0 ? Math.min(nbReviews / (nbFlashcards * 3), 1) : 0;
+    const flashScore = Math.round(flashRatio * (avgQuality / 5) * 20);
+    const nbExercises = parseInt(exerciseStats.total_exercises) || 0;
+    const avgExScore = parseFloat(exerciseStats.avg_score) || 0;
+    const exerciseScore = nbExercises > 0 ? Math.round(avgExScore * 0.25) : 0;
+    const docsScore = Math.min(documents.length * 2, 10);
+    const chatScore = Math.min(parseInt(chatStats.total_conversations) * 2, 10);
+    const totalSessions = await pool.query(
+      'SELECT COUNT(*) AS total, SUM(CASE WHEN statut = \'complete\' THEN 1 ELSE 0 END) AS done FROM sessions_planning WHERE user_id = $1 AND matiere_id = $2',
+      [userId, matiereId]
+    );
+    const sessTotal = parseInt(totalSessions.rows[0].total) || 0;
+    const sessDone = parseInt(totalSessions.rows[0].done) || 0;
+    const sessionScore = sessTotal > 0 ? Math.round((sessDone / sessTotal) * 5) : 0;
+    const scoreMaitrise = Math.round(Math.min(quizScore + flashScore + exerciseScore + docsScore + chatScore + sessionScore, 100));
 
     // 9. Score history (20 derniers quiz avec leur taux de réussite)
     const historyRes = await pool.query(

@@ -56,8 +56,16 @@ const getOverview = async (req, res) => {
                WHERE q3.matiere_id = m.id AND qr3.user_id = $1), 0
             ) * 0.4
           )
-          + (CASE WHEN (SELECT COUNT(*) FROM documents d2 WHERE d2.matiere_id = m.id AND d2.user_id = $1) > 0 THEN 100 ELSE 0 END * 0.2)
-          + (CASE WHEN (SELECT COUNT(*) FROM flashcards f2 WHERE f2.matiere_id = m.id AND f2.user_id = $1) > 0 THEN 100 ELSE 0 END * 0.2)
+          + (LEAST(COALESCE(
+              (SELECT COUNT(*) FROM documents d2 WHERE d2.matiere_id = m.id AND d2.user_id = $1), 0
+            ), 5) / 5.0 * 100 * 0.2)
+          + (CASE WHEN (SELECT COUNT(*) FROM flashcards f2 WHERE f2.matiere_id = m.id AND f2.user_id = $1) > 0
+              THEN LEAST(COALESCE(
+                (SELECT 100.0 * COUNT(fr2.id) / ((SELECT COUNT(*) FROM flashcards f3 WHERE f3.matiere_id = m.id AND f3.user_id = $1) * 3)
+                 FROM flashcard_reviews fr2
+                 JOIN flashcards f4 ON f4.id = fr2.flashcard_id
+                 WHERE f4.matiere_id = m.id AND f4.user_id = $1), 0
+              ), 100) ELSE 0 END * 0.2)
           + (COALESCE(100.0 *
               (SELECT COUNT(*) FROM sessions_planning sp2 WHERE sp2.matiere_id = m.id AND sp2.user_id = $1 AND sp2.statut = 'complete')
               / NULLIF((SELECT COUNT(*) FROM sessions_planning sp3 WHERE sp3.matiere_id = m.id AND sp3.user_id = $1), 0), 0
